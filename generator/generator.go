@@ -115,33 +115,21 @@ func GetStateForkConfig(version spec.DataVersion, config *config.Config) *phase0
 	thisForkVersion, foundThis := config.GetBytes(thisForkConfig.VersionField)
 	prevForkVersion, foundPrev := config.GetBytes(prevForkConfig.VersionField)
 
-	// Ensure we have non-empty byte arrays of appropriate length
-	if !foundThis || len(thisForkVersion) == 0 {
-		// Use default values (zeros) if we can't find the fork version
-		thisForkVersion = make([]byte, 4)
+	// Create fixed-length arrays for fork versions
+	var thisVersion, prevVersion [4]byte
+
+	// Ensure we have non-empty byte arrays and copy them to fixed-size arrays
+	if foundThis && len(thisForkVersion) > 0 {
+		copy(thisVersion[:], thisForkVersion)
 	}
 
-	if !foundPrev || len(prevForkVersion) == 0 {
-		// Use default values (zeros) if we can't find the fork version
-		prevForkVersion = make([]byte, 4)
-	}
-
-	// Ensure byte arrays are exactly 4 bytes long (required by phase0.Version)
-	if len(thisForkVersion) != 4 {
-		adjustedVersion := make([]byte, 4)
-		copy(adjustedVersion, thisForkVersion)
-		thisForkVersion = adjustedVersion
-	}
-
-	if len(prevForkVersion) != 4 {
-		adjustedVersion := make([]byte, 4)
-		copy(adjustedVersion, prevForkVersion)
-		prevForkVersion = adjustedVersion
+	if foundPrev && len(prevForkVersion) > 0 {
+		copy(prevVersion[:], prevForkVersion)
 	}
 
 	return &phase0.Fork{
-		CurrentVersion:  phase0.Version(thisForkVersion),
-		PreviousVersion: phase0.Version(prevForkVersion),
+		CurrentVersion:  phase0.Version(thisVersion),
+		PreviousVersion: phase0.Version(prevVersion),
 		Epoch:           0,
 	}
 }
