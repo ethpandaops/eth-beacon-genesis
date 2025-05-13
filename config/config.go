@@ -29,22 +29,35 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
-	values := make(map[string]string)
-	if err := yaml.Unmarshal(data, &values); err != nil {
+	// First try to parse with a more flexible structure that can handle nested elements
+	var rawValues map[string]interface{}
+	if err := yaml.Unmarshal(data, &rawValues); err != nil {
 		return nil, fmt.Errorf("parsing yaml: %w", err)
 	}
 
-	for key, value := range values {
-		if strings.HasPrefix(value, "0x") {
-			bytes, err := hex.DecodeString(strings.ReplaceAll(value, "0x", ""))
-			if err != nil {
-				return nil, fmt.Errorf("decoding hex: %w", err)
-			}
+	// Process the values, flattening where needed
+	for key, value := range rawValues {
+		// Skip BLOB_SCHEDULE and other complex structures, store them as-is
+		if key == "BLOB_SCHEDULE" || isComplexStructure(value) {
+			config.values[key] = value
+			continue
+		}
 
-			config.values[key] = bytes
-		} else if val, err := strconv.ParseUint(value, 10, 64); err == nil {
-			config.values[key] = val
+		// Handle string values as before
+		if strValue, ok := value.(string); ok {
+			if strings.HasPrefix(strValue, "0x") {
+				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
+				if err != nil {
+					return nil, fmt.Errorf("decoding hex: %w", err)
+				}
+				config.values[key] = bytes
+			} else if val, err := strconv.ParseUint(strValue, 10, 64); err == nil {
+				config.values[key] = val
+			} else {
+				config.values[key] = strValue
+			}
 		} else {
+			// For other types, store as-is
 			config.values[key] = value
 		}
 	}
@@ -60,27 +73,68 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("preset '%v' not found: %w", presetName, err)
 	}
 
-	presets := make(map[string]string)
-	if err := yaml.Unmarshal(presetData, &presets); err != nil {
+	// Use the same approach for presets
+	var rawPresets map[string]interface{}
+	if err := yaml.Unmarshal(presetData, &rawPresets); err != nil {
 		return nil, fmt.Errorf("failed to parse preset yaml: %w", err)
 	}
 
-	for key, value := range presets {
-		if strings.HasPrefix(value, "0x") {
-			bytes, err := hex.DecodeString(strings.ReplaceAll(value, "0x", ""))
-			if err != nil {
-				return nil, fmt.Errorf("decoding hex: %w", err)
-			}
+	for key, value := range rawPresets {
+		if isComplexStructure(value) {
+			config.preset[key] = value
+			continue
+		}
 
-			config.preset[key] = bytes
-		} else if val, err := strconv.ParseUint(value, 10, 64); err == nil {
-			config.preset[key] = val
+		if strValue, ok := value.(string); ok {
+			if strings.HasPrefix(strValue, "0x") {
+				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
+				if err != nil {
+					return nil, fmt.Errorf("decoding hex: %w", err)
+				}
+				config.preset[key] = bytes
+			} else if val, err := strconv.ParseUint(strValue, 10, 64); err == nil {
+				config.preset[key] = val
+			} else {
+				config.preset[key] = strValue
+			}
 		} else {
 			config.preset[key] = value
 		}
 	}
 
 	return config, nil
+}
+
+// Helper function to check if a value is a complex structure (not a simple scalar)
+func isComplexStructure(value interface{}) bool {
+	switch value.(type) {
+	case map[string]interface{}, []interface{}:
+		return true
+	default:
+		return false
+	}
+}
+
+// Add GetBlobSchedule method to access the BLOB_SCHEDULE
+func (c *Config) GetBlobSchedule() ([]map[string]interface{}, bool) {
+	value, ok := c.Get("BLOB_SCHEDULE")
+	if !ok {
+		return nil, false
+	}
+
+	schedule, ok := value.([]interface{})
+	if !ok {
+		return nil, false
+	}
+
+	result := make([]map[string]interface{}, 0, len(schedule))
+	for _, item := range schedule {
+		if itemMap, ok := item.(map[string]interface{}); ok {
+			result = append(result, itemMap)
+		}
+	}
+
+	return result, len(result) > 0
 }
 
 func (c *Config) Get(key string) (interface{}, bool) {
