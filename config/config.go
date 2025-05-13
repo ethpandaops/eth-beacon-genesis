@@ -45,7 +45,14 @@ func LoadConfig(path string) (*Config, error) {
 
 		// Handle string values as before
 		if strValue, ok := value.(string); ok {
-			if strings.HasPrefix(strValue, "0x") {
+			// Special handling for fork version fields which are always hex
+			if strings.HasSuffix(key, "_FORK_VERSION") && strings.HasPrefix(strValue, "0x") {
+				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
+				if err != nil {
+					return nil, fmt.Errorf("decoding hex for %s: %w", key, err)
+				}
+				config.values[key] = bytes
+			} else if strings.HasPrefix(strValue, "0x") {
 				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
 				if err != nil {
 					return nil, fmt.Errorf("decoding hex: %w", err)
@@ -86,7 +93,14 @@ func LoadConfig(path string) (*Config, error) {
 		}
 
 		if strValue, ok := value.(string); ok {
-			if strings.HasPrefix(strValue, "0x") {
+			// Special handling for fork version fields which are always hex
+			if strings.HasSuffix(key, "_FORK_VERSION") && strings.HasPrefix(strValue, "0x") {
+				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
+				if err != nil {
+					return nil, fmt.Errorf("decoding hex for %s: %w", key, err)
+				}
+				config.preset[key] = bytes
+			} else if strings.HasPrefix(strValue, "0x") {
 				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
 				if err != nil {
 					return nil, fmt.Errorf("decoding hex: %w", err)
@@ -188,8 +202,17 @@ func (c *Config) GetBytes(key string) ([]byte, bool) {
 		return nil, false
 	}
 
+	// If it's already a byte slice, return it
 	if bytes, ok := value.([]byte); ok {
 		return bytes, true
+	}
+
+	// If it's a string, try to convert it to bytes if it's a hex string
+	if str, ok := value.(string); ok && strings.HasPrefix(str, "0x") {
+		bytes, err := hex.DecodeString(strings.ReplaceAll(str, "0x", ""))
+		if err == nil {
+			return bytes, true
+		}
 	}
 
 	return nil, false
