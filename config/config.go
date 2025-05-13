@@ -51,12 +51,14 @@ func LoadConfig(path string) (*Config, error) {
 				if err != nil {
 					return nil, fmt.Errorf("decoding hex for %s: %w", key, err)
 				}
+
 				config.values[key] = bytes
 			} else if strings.HasPrefix(strValue, "0x") {
 				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
 				if err != nil {
 					return nil, fmt.Errorf("decoding hex: %w", err)
 				}
+
 				config.values[key] = bytes
 			} else if val, err := strconv.ParseUint(strValue, 10, 64); err == nil {
 				config.values[key] = val
@@ -99,12 +101,14 @@ func LoadConfig(path string) (*Config, error) {
 				if err != nil {
 					return nil, fmt.Errorf("decoding hex for %s: %w", key, err)
 				}
+
 				config.preset[key] = bytes
 			} else if strings.HasPrefix(strValue, "0x") {
 				bytes, err := hex.DecodeString(strings.ReplaceAll(strValue, "0x", ""))
 				if err != nil {
 					return nil, fmt.Errorf("decoding hex: %w", err)
 				}
+
 				config.preset[key] = bytes
 			} else if val, err := strconv.ParseUint(strValue, 10, 64); err == nil {
 				config.preset[key] = val
@@ -142,6 +146,7 @@ func (c *Config) GetBlobSchedule() ([]map[string]interface{}, bool) {
 	}
 
 	result := make([]map[string]interface{}, 0, len(schedule))
+
 	for _, item := range schedule {
 		if itemMap, ok := item.(map[string]interface{}); ok {
 			result = append(result, itemMap)
