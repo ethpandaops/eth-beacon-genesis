@@ -2,13 +2,13 @@
 
 # Misc
 # ---------------------------------------------------------------
-# [customized] Just 4 committees for slot for testing purposes
+# [customized] 2**2 (= 4) committees
 MAX_COMMITTEES_PER_SLOT: 4
-# [customized] insecure, but fast
+# [customized] 2**2 (= 4) committees
 TARGET_COMMITTEE_SIZE: 4
-# 2**11 (= 2,048)
+# 2**11 (= 2,048) validators
 MAX_VALIDATORS_PER_COMMITTEE: 2048
-# [customized] Faster, but insecure.
+# [customized]
 SHUFFLE_ROUND_COUNT: 10
 # 4
 HYSTERESIS_QUOTIENT: 4
@@ -16,7 +16,6 @@ HYSTERESIS_QUOTIENT: 4
 HYSTERESIS_DOWNWARD_MULTIPLIER: 1
 # 5 (plus 1.25)
 HYSTERESIS_UPWARD_MULTIPLIER: 5
-
 
 # Gwei values
 # ---------------------------------------------------------------
@@ -27,38 +26,35 @@ MAX_EFFECTIVE_BALANCE: 32000000000
 # 2**0 * 10**9 (= 1,000,000,000) Gwei
 EFFECTIVE_BALANCE_INCREMENT: 1000000000
 
-
 # Time parameters
 # ---------------------------------------------------------------
-# 2**0 (= 1) slots 6 seconds
+# 2**0 (= 1) slots, 6 seconds
 MIN_ATTESTATION_INCLUSION_DELAY: 1
-# [customized] fast epochs
+# 2**5 (= 32) slots, 48 seconds
 SLOTS_PER_EPOCH: 8
-# 2**0 (= 1) epochs
+# 2**0 (= 1) epochs, 48 seconds
 MIN_SEED_LOOKAHEAD: 1
-# 2**2 (= 4) epochs
+# 2**2 (= 4) epochs, 3.2 minutes
 MAX_SEED_LOOKAHEAD: 4
-# [customized] higher frequency new deposits from eth1 for testing
+# [customized] 2**2 (= 4) epochs, 3.2 minutes
 EPOCHS_PER_ETH1_VOTING_PERIOD: 4
-# [customized] smaller state
+# [customized] 2**6 (= 64) slots, 51.2 minutes
 SLOTS_PER_HISTORICAL_ROOT: 64
-# 2**2 (= 4) epochs
+# 2**2 (= 4) epochs, 3.2 minutes
 MIN_EPOCHS_TO_INACTIVITY_PENALTY: 4
-
 
 # State list lengths
 # ---------------------------------------------------------------
-# [customized] smaller state
+# [customized] 2**6 (= 64) epochs, 51.2 minutes
 EPOCHS_PER_HISTORICAL_VECTOR: 64
-# [customized] smaller state
+# [customized] 2**6 (= 64) epochs, 51.2 minutes
 EPOCHS_PER_SLASHINGS_VECTOR: 64
-# 2**24 (= 16,777,216) historical roots
+# 2**24 (= 16,777,216) historical roots, ~204 years
 HISTORICAL_ROOTS_LIMIT: 16777216
 # 2**40 (= 1,099,511,627,776) validator spots
 VALIDATOR_REGISTRY_LIMIT: 1099511627776
 
-
-# Reward and penalty quotients
+# Rewards and penalties
 # ---------------------------------------------------------------
 # 2**6 (= 64)
 BASE_REWARD_FACTOR: 64
@@ -70,26 +66,25 @@ PROPOSER_REWARD_QUOTIENT: 8
 INACTIVITY_PENALTY_QUOTIENT: 33554432
 # [customized] 2**6 (= 64)
 MIN_SLASHING_PENALTY_QUOTIENT: 64
-# [customized] 2 (lower safety margin than Phase 0 genesis but different than mainnet config for testing)
+# [customized] 2 (lower safety margin than Phase0 genesis but different than mainnet config for testing)
 PROPORTIONAL_SLASHING_MULTIPLIER: 2
-
 
 # Max operations per block
 # ---------------------------------------------------------------
-# 2**4 (= 16)
+# 2**4 (= 16) proposer slashings
 MAX_PROPOSER_SLASHINGS: 16
-# 2**1 (= 2)
+# 2**1 (= 2) attester slashings
 MAX_ATTESTER_SLASHINGS: 2
-# 2**7 (= 128)
+# 2**7 (= 128) attestations
 MAX_ATTESTATIONS: 128
-# 2**4 (= 16)
+# 2**4 (= 16) deposits
 MAX_DEPOSITS: 16
-# 2**4 (= 16)
+# 2**4 (= 16) voluntary exits
 MAX_VOLUNTARY_EXITS: 16
 
 # Minimal preset - Altair
 
-# Updated penalty values
+# Rewards and penalties
 # ---------------------------------------------------------------
 # 3 * 2**24 (= 50,331,648)
 INACTIVITY_PENALTY_QUOTIENT_ALTAIR: 50331648
@@ -98,25 +93,23 @@ MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR: 64
 # 2
 PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR: 2
 
-
 # Sync committee
 # ---------------------------------------------------------------
-# [customized]
+# [customized] 2**5 (= 32) participants
 SYNC_COMMITTEE_SIZE: 32
-# [customized]
+# [customized] 2**3 (= 8) epochs
 EPOCHS_PER_SYNC_COMMITTEE_PERIOD: 8
-
 
 # Sync protocol
 # ---------------------------------------------------------------
-# 1
+# 2**0 (= 1) participants
 MIN_SYNC_COMMITTEE_PARTICIPANTS: 1
-# SLOTS_PER_EPOCH * EPOCHS_PER_SYNC_COMMITTEE_PERIOD (= 8 * 8)
+# [customized] SLOTS_PER_EPOCH * EPOCHS_PER_SYNC_COMMITTEE_PERIOD (= 8 * 8) epochs
 UPDATE_TIMEOUT: 64
 
 # Minimal preset - Bellatrix
 
-# Updated penalty values
+# Rewards and penalties
 # ---------------------------------------------------------------
 # 2**24 (= 16,777,216)
 INACTIVITY_PENALTY_QUOTIENT_BELLATRIX: 16777216
@@ -127,26 +120,25 @@ PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX: 3
 
 # Execution
 # ---------------------------------------------------------------
-# 2**30 (= 1,073,741,824)
+# 2**30 (= 1,073,741,824) bytes
 MAX_BYTES_PER_TRANSACTION: 1073741824
-# 2**20 (= 1,048,576)
+# 2**20 (= 1,048,576) transactions
 MAX_TRANSACTIONS_PER_PAYLOAD: 1048576
-# 2**8 (= 256)
+# 2**8 (= 256) bytes
 BYTES_PER_LOGS_BLOOM: 256
-# 2**5 (= 32)
+# 2**5 (= 32) bytes
 MAX_EXTRA_DATA_BYTES: 32
 
 # Minimal preset - Capella
 
 # Max operations per block
 # ---------------------------------------------------------------
-# 2**4 (= 16)
+# 2**4 (= 16) credential changes
 MAX_BLS_TO_EXECUTION_CHANGES: 16
-
 
 # Execution
 # ---------------------------------------------------------------
-# [customized] 2**2 (= 4)
+# [customized] 2**2 (= 4) withdrawals
 MAX_WITHDRAWALS_PER_PAYLOAD: 4
 
 # Withdrawals processing
@@ -156,14 +148,20 @@ MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP: 16
 
 # Minimal preset - Deneb
 
-# Misc
+# Execution
 # ---------------------------------------------------------------
-# `uint64(4096)`
-FIELD_ELEMENTS_PER_BLOB: 4096
-# [customized]
+# [customized] 2**5 (= 32) blob commitments
 MAX_BLOB_COMMITMENTS_PER_BLOCK: 32
-# [customized] `floorlog2(get_generalized_index(BeaconBlockBody, 'blob_kzg_commitments')) + 1 + ceillog2(MAX_BLOB_COMMITMENTS_PER_BLOCK)` = 4 + 1 + 5 = 10
+
+# Networking
+# ---------------------------------------------------------------
+# [customized] floorlog2(get_generalized_index(BeaconBlockBody, 'blob_kzg_commitments')) + 1 + ceillog2(MAX_BLOB_COMMITMENTS_PER_BLOCK) (= 4 + 1 + 5 = 10)
 KZG_COMMITMENT_INCLUSION_PROOF_DEPTH: 10
+
+# Blob
+# ---------------------------------------------------------------
+# 2**12 (= 4,096) field elements
+FIELD_ELEMENTS_PER_BLOB: 4096
 
 # Minimal preset - Electra
 
@@ -215,3 +213,17 @@ MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP: 2
 # ---------------------------------------------------------------
 # 2**4 (= 16) pending deposits
 MAX_PENDING_DEPOSITS_PER_EPOCH: 16
+
+# Minimal preset - Fulu
+
+# Networking
+# ---------------------------------------------------------------
+# floorlog2(get_generalized_index(BeaconBlockBody, 'blob_kzg_commitments') (= 4)
+KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH: 4
+
+# Blob
+# ---------------------------------------------------------------
+# 2**6 (= 64)
+FIELD_ELEMENTS_PER_CELL: 64
+# 2**1 * FIELD_ELEMENTS_PER_BLOB (= 8,192)
+FIELD_ELEMENTS_PER_EXT_BLOB: 8192
