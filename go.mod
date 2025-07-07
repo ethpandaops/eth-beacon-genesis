@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
-	github.com/ethereum/go-ethereum v1.16.0
+	github.com/ethereum/go-ethereum v1.16.1
 	github.com/ferranbt/fastssz v0.1.4
 	github.com/herumi/bls-eth-go-binary v1.36.4
 	github.com/holiman/uint256 v1.3.2
