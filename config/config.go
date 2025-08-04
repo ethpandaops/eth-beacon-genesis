@@ -75,12 +75,12 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("preset '%v' not found: %w", presetName, err)
 	}
 
-	presets := make(map[string]string)
-	if err := yaml.Unmarshal(presetData, &presets); err != nil {
+	presetMap := make(map[string]string)
+	if err := yaml.Unmarshal(presetData, &presetMap); err != nil {
 		return nil, fmt.Errorf("failed to parse preset yaml: %w", err)
 	}
 
-	for key, value := range presets {
+	for key, value := range presetMap {
 		if strings.HasPrefix(value, "0x") {
 			bytes, err := hex.DecodeString(strings.ReplaceAll(value, "0x", ""))
 			if err != nil {

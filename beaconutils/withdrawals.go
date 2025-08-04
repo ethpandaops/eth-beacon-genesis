@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"fmt"
@@ -12,12 +12,12 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/config"
 )
 
-func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, config *config.Config) (phase0.Root, error) {
+func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, cfg *config.Config) (phase0.Root, error) {
 	// Compute the SSZ hash-tree-root of the withdrawals,
 	// since that is what we put as withdrawals_root in the CL execution-payload.
 	// Not to be confused with the legacy MPT root in the EL block header.
 	num := uint64(len(withdrawals))
-	maxWithdrawalsPerPayload := config.GetUintDefault("MAX_WITHDRAWALS_PER_PAYLOAD", 16)
+	maxWithdrawalsPerPayload := cfg.GetUintDefault("MAX_WITHDRAWALS_PER_PAYLOAD", 16)
 
 	if num > maxWithdrawalsPerPayload {
 		return phase0.Root{}, fmt.Errorf("withdrawals list is too long")

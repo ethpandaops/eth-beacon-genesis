@@ -11,10 +11,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
 
+	"github.com/ethpandaops/eth-beacon-genesis/buildinfo"
 	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/eth1"
 	"github.com/ethpandaops/eth-beacon-genesis/generator"
-	"github.com/ethpandaops/eth-beacon-genesis/utils"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
@@ -80,7 +80,7 @@ var (
 				Usage: "Print the version of the application",
 				Flags: []cli.Flag{},
 				Action: func(_ context.Context, _ *cli.Command) error {
-					fmt.Printf("eth-beacon-genesis version %s\n", utils.GetBuildVersion())
+					fmt.Printf("eth-beacon-genesis version %s\n", buildinfo.GetBuildVersion())
 					return nil
 				},
 			},
@@ -111,7 +111,7 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if !quiet {
-		logrus.Infof("eth-beacon-genesis version: %s", utils.GetBuildVersion())
+		logrus.Infof("eth-beacon-genesis version: %s", buildinfo.GetBuildVersion())
 	}
 
 	elGenesis, err := eth1.LoadEth1GenesisConfig(eth1Config)

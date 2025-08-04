@@ -14,8 +14,8 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
 	"github.com/ethpandaops/eth-beacon-genesis/config"
-	"github.com/ethpandaops/eth-beacon-genesis/utils"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
@@ -32,7 +32,7 @@ func NewDenebBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBu
 	return &denebBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
-		dynSsz:    utils.GetDynSSZ(clConfig),
+		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
@@ -40,8 +40,8 @@ func (b *denebBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *denebBuilder) AddValidators(validators []*validators.Validator) {
-	b.validators = append(b.validators, validators...)
+func (b *denebBuilder) AddValidators(val []*validators.Validator) {
+	b.validators = append(b.validators, val...)
 }
 
 func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
@@ -62,7 +62,7 @@ func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	var withdrawalsRoot phase0.Root
 
 	if genesisBlock.Withdrawals() != nil {
-		root, err := utils.ComputeWithdrawalsRoot(genesisBlock.Withdrawals(), b.clConfig)
+		root, err := beaconutils.ComputeWithdrawalsRoot(genesisBlock.Withdrawals(), b.clConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compute withdrawals root: %w", err)
 		}
@@ -70,7 +70,7 @@ func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		withdrawalsRoot = root
 	}
 
-	transactionsRoot, err := utils.ComputeTransactionsRoot(genesisBlock.Transactions(), b.clConfig)
+	transactionsRoot, err := beaconutils.ComputeTransactionsRoot(genesisBlock.Transactions(), b.clConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute transactions root: %w", err)
 	}
@@ -102,7 +102,7 @@ func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		ExcessBlobGas:    *genesisBlock.ExcessBlobGas(),
 	}
 
-	depositRoot, err := utils.ComputeDepositRoot(b.clConfig)
+	depositRoot, err := beaconutils.ComputeDepositRoot(b.clConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute deposit root: %w", err)
 	}
@@ -131,9 +131,9 @@ func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute genesis block body root: %w", err)
 	}
 
-	clValidators, validatorsRoot := utils.GetGenesisValidators(b.clConfig, b.validators)
+	clValidators, validatorsRoot := beaconutils.GetGenesisValidators(b.clConfig, b.validators)
 
-	syncCommittee, err := utils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
+	syncCommittee, err := beaconutils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get genesis sync committee: %w", err)
 	}
@@ -164,9 +164,9 @@ func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		PreviousJustifiedCheckpoint:  &phase0.Checkpoint{},
 		CurrentJustifiedCheckpoint:   &phase0.Checkpoint{},
 		FinalizedCheckpoint:          &phase0.Checkpoint{},
-		RANDAOMixes:                  utils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
+		RANDAOMixes:                  beaconutils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
 		Validators:                   clValidators,
-		Balances:                     utils.GetGenesisBalances(b.clConfig, b.validators),
+		Balances:                     beaconutils.GetGenesisBalances(b.clConfig, b.validators),
 		Slashings:                    make([]phase0.Gwei, epochsPerSlashingVector),
 		PreviousEpochParticipation:   make([]altair.ParticipationFlags, len(clValidators)),
 		CurrentEpochParticipation:    make([]altair.ParticipationFlags, len(clValidators)),

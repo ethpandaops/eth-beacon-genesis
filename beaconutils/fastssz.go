@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import ssz "github.com/ferranbt/fastssz"
 

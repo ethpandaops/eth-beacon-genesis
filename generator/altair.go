@@ -12,8 +12,8 @@ import (
 	dynssz "github.com/pk910/dynamic-ssz"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
 	"github.com/ethpandaops/eth-beacon-genesis/config"
-	"github.com/ethpandaops/eth-beacon-genesis/utils"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
@@ -29,7 +29,7 @@ func NewAltairBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisB
 	return &altairBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
-		dynSsz:    utils.GetDynSSZ(clConfig),
+		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
@@ -37,8 +37,8 @@ func (b *altairBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *altairBuilder) AddValidators(validators []*validators.Validator) {
-	b.validators = append(b.validators, validators...)
+func (b *altairBuilder) AddValidators(val []*validators.Validator) {
+	b.validators = append(b.validators, val...)
 }
 
 func (b *altairBuilder) BuildState() (*spec.VersionedBeaconState, error) {
@@ -54,7 +54,7 @@ func (b *altairBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("extra data is %d bytes, max is %d", len(extra), 32)
 	}
 
-	depositRoot, err := utils.ComputeDepositRoot(b.clConfig)
+	depositRoot, err := beaconutils.ComputeDepositRoot(b.clConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute deposit root: %w", err)
 	}
@@ -80,9 +80,9 @@ func (b *altairBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute genesis block body root: %w", err)
 	}
 
-	clValidators, validatorsRoot := utils.GetGenesisValidators(b.clConfig, b.validators)
+	clValidators, validatorsRoot := beaconutils.GetGenesisValidators(b.clConfig, b.validators)
 
-	syncCommittee, err := utils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
+	syncCommittee, err := beaconutils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get genesis sync committee: %w", err)
 	}
@@ -113,9 +113,9 @@ func (b *altairBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		PreviousJustifiedCheckpoint: &phase0.Checkpoint{},
 		CurrentJustifiedCheckpoint:  &phase0.Checkpoint{},
 		FinalizedCheckpoint:         &phase0.Checkpoint{},
-		RANDAOMixes:                 utils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
+		RANDAOMixes:                 beaconutils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
 		Validators:                  clValidators,
-		Balances:                    utils.GetGenesisBalances(b.clConfig, b.validators),
+		Balances:                    beaconutils.GetGenesisBalances(b.clConfig, b.validators),
 		Slashings:                   make([]phase0.Gwei, epochsPerSlashingVector),
 		PreviousEpochParticipation:  make([]altair.ParticipationFlags, len(clValidators)),
 		CurrentEpochParticipation:   make([]altair.ParticipationFlags, len(clValidators)),

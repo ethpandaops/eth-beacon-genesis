@@ -100,7 +100,7 @@ func GetForkConfig(version spec.DataVersion) *ForkConfig {
 	return nil
 }
 
-func GetStateForkConfig(version spec.DataVersion, config *config.Config) *phase0.Fork {
+func GetStateForkConfig(version spec.DataVersion, cfg *config.Config) *phase0.Fork {
 	thisForkConfig := GetForkConfig(version)
 
 	var prevForkConfig *ForkConfig
@@ -111,8 +111,8 @@ func GetStateForkConfig(version spec.DataVersion, config *config.Config) *phase0
 		prevForkConfig = GetForkConfig(version - 1)
 	}
 
-	thisForkVersion, _ := config.GetBytes(thisForkConfig.VersionField)
-	prevForkVersion, _ := config.GetBytes(prevForkConfig.VersionField)
+	thisForkVersion, _ := cfg.GetBytes(thisForkConfig.VersionField)
+	prevForkVersion, _ := cfg.GetBytes(prevForkConfig.VersionField)
 
 	return &phase0.Fork{
 		CurrentVersion:  phase0.Version(thisForkVersion),

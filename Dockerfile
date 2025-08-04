@@ -11,7 +11,7 @@ RUN <<EOR
   VERSION=$(git rev-parse --short HEAD)
   BUILDTIME=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
   RELEASE=$release
-  CGO_ENABLED=1 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app/eth-beacon-genesis -ldflags="-s -w -X 'github.com/ethpandaops/eth-beacon-genesis/utils.BuildVersion=${VERSION}' -X 'github.com/ethpandaops/eth-beacon-genesis/utils.BuildRelease=${RELEASE}' -X 'github.com/ethpandaops/eth-beacon-genesis/utils.Buildtime=${BUILDTIME}'" ./cmd/eth-beacon-genesis
+  CGO_ENABLED=1 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /app/eth-beacon-genesis -ldflags="-s -w -X 'github.com/ethpandaops/eth-beacon-genesis/buildinfo.BuildVersion=${VERSION}' -X 'github.com/ethpandaops/eth-beacon-genesis/buildinfo.BuildRelease=${RELEASE}' -X 'github.com/ethpandaops/eth-beacon-genesis/buildinfo.Buildtime=${BUILDTIME}'" ./cmd/eth-beacon-genesis
 EOR
 
 # final stage

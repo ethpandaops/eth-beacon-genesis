@@ -2,9 +2,9 @@
 BUILDTIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 VERSION := $(shell git rev-parse --short HEAD)
 
-GOLDFLAGS += -X 'github.com/ethpandaops/eth-beacon-genesis/utils.BuildVersion="$(VERSION)"'
-GOLDFLAGS += -X 'github.com/ethpandaops/eth-beacon-genesis/utils.Buildtime="$(BUILDTIME)"'
-GOLDFLAGS += -X 'github.com/ethpandaops/eth-beacon-genesis/utils.BuildRelease="$(RELEASE)"'
+GOLDFLAGS += -X 'github.com/ethpandaops/eth-beacon-genesis/buildinfo.BuildVersion="$(VERSION)"'
+GOLDFLAGS += -X 'github.com/ethpandaops/eth-beacon-genesis/buildinfo.Buildtime="$(BUILDTIME)"'
+GOLDFLAGS += -X 'github.com/ethpandaops/eth-beacon-genesis/buildinfo.BuildRelease="$(RELEASE)"'
 
 .PHONY: all test clean
 

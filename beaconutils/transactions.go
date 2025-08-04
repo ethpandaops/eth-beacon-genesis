@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"fmt"
@@ -11,12 +11,12 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/config"
 )
 
-func ComputeTransactionsRoot(transactions types.Transactions, config *config.Config) (phase0.Root, error) {
+func ComputeTransactionsRoot(transactions types.Transactions, cfg *config.Config) (phase0.Root, error) {
 	// Compute the SSZ hash-tree-root of the transactions,
 	// since that is what we put as transactions_root in the CL execution-payload.
 	// Not to be confused with the legacy MPT root in the EL block header.
 	num := uint64(len(transactions))
-	maxTransactionsPerPayload := config.GetUintDefault("MAX_TRANSACTIONS_PER_PAYLOAD", 1048576)
+	maxTransactionsPerPayload := cfg.GetUintDefault("MAX_TRANSACTIONS_PER_PAYLOAD", 1048576)
 
 	if num > maxTransactionsPerPayload {
 		return phase0.Root{}, fmt.Errorf("transactions list is too long")
@@ -33,7 +33,7 @@ func ComputeTransactionsRoot(transactions types.Transactions, config *config.Con
 		clTransactions[i] = opaqueTx
 	}
 
-	maxBytesPerTx := config.GetUintDefault("MAX_BYTES_PER_TRANSACTION", 1073741824)
+	maxBytesPerTx := cfg.GetUintDefault("MAX_BYTES_PER_TRANSACTION", 1073741824)
 
 	transactionsRoot, err := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
 		for i, elem := range clTransactions {

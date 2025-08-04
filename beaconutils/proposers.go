@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"crypto/sha256"
@@ -17,9 +17,10 @@ func GetGenesisProposers(clConfig *config.Config, validators []*phase0.Validator
 
 	// Get active validator indices
 	activeIndices := []phase0.ValidatorIndex{}
+
 	for i, validator := range validators {
 		if validator.ActivationEpoch == 0 { // Active at genesis
-			activeIndices = append(activeIndices, phase0.ValidatorIndex(i))
+			activeIndices = append(activeIndices, phase0.ValidatorIndex(i)) //nolint:gosec // no overflow
 		}
 	}
 
@@ -29,19 +30,16 @@ func GetGenesisProposers(clConfig *config.Config, validators []*phase0.Validator
 
 	// Calculate proposers for each slot
 	proposers := make([]phase0.ValidatorIndex, totalSlots)
+
 	for slot := uint64(0); slot < totalSlots; slot++ {
-		proposer, err := computeProposerIndex(clConfig, validators, activeIndices, phase0.Slot(slot), genesisBlockHash)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute proposer for slot %d: %w", slot, err)
-		}
-		proposers[slot] = proposer
+		proposers[slot] = computeProposerIndex(clConfig, validators, activeIndices, phase0.Slot(slot), genesisBlockHash)
 	}
 
 	return proposers, nil
 }
 
 // computeProposerIndex calculates the proposer for a given slot
-func computeProposerIndex(clConfig *config.Config, validators []*phase0.Validator, activeIndices []phase0.ValidatorIndex, slot phase0.Slot, genesisBlockHash phase0.Hash32) (phase0.ValidatorIndex, error) {
+func computeProposerIndex(clConfig *config.Config, validators []*phase0.Validator, activeIndices []phase0.ValidatorIndex, slot phase0.Slot, genesisBlockHash phase0.Hash32) phase0.ValidatorIndex {
 	slotsPerEpoch := clConfig.GetUintDefault("SLOTS_PER_EPOCH", 32)
 	epoch := phase0.Epoch(uint64(slot) / slotsPerEpoch)
 
@@ -52,12 +50,17 @@ func computeProposerIndex(clConfig *config.Config, validators []*phase0.Validato
 	seed := computeGenesisSeed(genesisBlockHash, epoch, phase0.DomainType(domainBeaconProposer))
 
 	// Create slot-specific seed
-	seedData := append(seed[:], make([]byte, 8)...)
+	seedData := make([]byte, 40)
+	copy(seedData, seed[:])
 	binary.LittleEndian.PutUint64(seedData[32:], uint64(slot))
 	slotSeed := sha256.Sum256(seedData)
 
 	// Find proposer using the same algorithm as in temp/duties.go
 	shuffleRoundCount := clConfig.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
+	if shuffleRoundCount > 255 {
+		shuffleRoundCount = 255
+	}
+
 	activeCount := uint64(len(activeIndices))
 
 	// We can safely assume that electra is always activated because the proposer calculation is needed for fulu onwards only
@@ -68,7 +71,7 @@ func computeProposerIndex(clConfig *config.Config, validators []*phase0.Validato
 	for i := uint64(0); ; i++ {
 		// Use PermuteIndex for shuffling (same as sync committee selection)
 		shuffledIndex := PermuteIndex(
-			uint8(shuffleRoundCount),
+			uint8(shuffleRoundCount), //nolint:gosec // no overflow
 			phase0.ValidatorIndex(i%activeCount),
 			activeCount,
 			phase0.Root(slotSeed),
@@ -88,7 +91,7 @@ func computeProposerIndex(clConfig *config.Config, validators []*phase0.Validato
 
 		// Check if this validator is selected as proposer
 		if uint64(effectiveBalance)*maxRandomValue >= maxEffectiveBalance*randomValue {
-			return validatorIndex, nil
+			return validatorIndex
 		}
 	}
 }

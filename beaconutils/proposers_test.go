@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"testing"
@@ -47,7 +47,7 @@ func TestGetGenesisProposers(t *testing.T) {
 
 	// Verify all proposers are valid indices
 	for i, proposer := range proposers {
-		if int(proposer) >= len(validators) {
+		if uint64(proposer) >= uint64(len(validators)) {
 			t.Errorf("Invalid proposer index %d at slot %d", proposer, i)
 		}
 	}
