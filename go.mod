@@ -4,17 +4,17 @@ go 1.24.0
 
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
-	github.com/ethereum/go-ethereum v1.16.0
+	github.com/ethereum/go-ethereum v1.16.1
 	github.com/ferranbt/fastssz v0.1.4
 	github.com/herumi/bls-eth-go-binary v1.36.4
 	github.com/holiman/uint256 v1.3.2
-	github.com/pk910/dynamic-ssz v1.0.0
+	github.com/pk910/dynamic-ssz v1.0.1
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/urfave/cli/v3 v3.3.8
 	github.com/wealdtech/go-eth2-util v1.8.2
-	golang.org/x/sync v0.15.0
+	golang.org/x/sync v0.16.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -24,6 +24,7 @@ require (
 	github.com/VictoriaMetrics/fastcache v1.12.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
+	github.com/casbin/govaluate v1.8.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/consensys/gnark-crypto v0.18.0 // indirect
 	github.com/crate-crypto/go-eth-kzg v1.3.0 // indirect
@@ -78,7 +79,6 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
-	gopkg.in/Knetic/govaluate.v3 v3.0.0 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
