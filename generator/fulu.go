@@ -1,0 +1,213 @@
+package generator
+
+import (
+	"fmt"
+
+	"github.com/attestantio/go-eth2-client/http"
+	"github.com/attestantio/go-eth2-client/spec"
+	"github.com/attestantio/go-eth2-client/spec/altair"
+	"github.com/attestantio/go-eth2-client/spec/bellatrix"
+	"github.com/attestantio/go-eth2-client/spec/deneb"
+	"github.com/attestantio/go-eth2-client/spec/electra"
+	"github.com/attestantio/go-eth2-client/spec/fulu"
+	"github.com/attestantio/go-eth2-client/spec/phase0"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/holiman/uint256"
+	"github.com/sirupsen/logrus"
+
+	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/utils"
+	"github.com/ethpandaops/eth-beacon-genesis/validators"
+	dynssz "github.com/pk910/dynamic-ssz"
+)
+
+type fuluBuilder struct {
+	elGenesis       *core.Genesis
+	clConfig        *config.Config
+	dynSsz          *dynssz.DynSsz
+	shadowForkBlock *types.Block
+	validators      []*validators.Validator
+}
+
+func NewFuluBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
+	return &fuluBuilder{
+		elGenesis: elGenesis,
+		clConfig:  clConfig,
+		dynSsz:    utils.GetDynSSZ(clConfig),
+	}
+}
+
+func (b *fuluBuilder) SetShadowForkBlock(block *types.Block) {
+	b.shadowForkBlock = block
+}
+
+func (b *fuluBuilder) AddValidators(validators []*validators.Validator) {
+	b.validators = append(b.validators, validators...)
+}
+
+func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
+	genesisBlock := b.shadowForkBlock
+	if genesisBlock == nil {
+		genesisBlock = b.elGenesis.ToBlock()
+	}
+
+	genesisBlockHash := genesisBlock.Hash()
+
+	extra := genesisBlock.Extra()
+	if len(extra) > 32 {
+		return nil, fmt.Errorf("extra data is %d bytes, max is %d", len(extra), 32)
+	}
+
+	baseFee, _ := uint256.FromBig(genesisBlock.BaseFee())
+
+	var withdrawalsRoot phase0.Root
+
+	if genesisBlock.Withdrawals() != nil {
+		root, err := utils.ComputeWithdrawalsRoot(genesisBlock.Withdrawals(), b.clConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compute withdrawals root: %w", err)
+		}
+
+		withdrawalsRoot = root
+	}
+
+	transactionsRoot, err := utils.ComputeTransactionsRoot(genesisBlock.Transactions(), b.clConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute transactions root: %w", err)
+	}
+
+	if genesisBlock.BlobGasUsed() == nil {
+		return nil, fmt.Errorf("execution-layer Block has missing blob-gas-used field")
+	}
+
+	if genesisBlock.ExcessBlobGas() == nil {
+		return nil, fmt.Errorf("execution-layer Block has missing excess-blob-gas field")
+	}
+
+	execHeader := &deneb.ExecutionPayloadHeader{
+		ParentHash:       phase0.Hash32(genesisBlock.ParentHash()),
+		FeeRecipient:     bellatrix.ExecutionAddress(genesisBlock.Coinbase()),
+		StateRoot:        phase0.Root(genesisBlock.Root()),
+		ReceiptsRoot:     phase0.Root(genesisBlock.ReceiptHash()),
+		LogsBloom:        genesisBlock.Bloom(),
+		BlockNumber:      genesisBlock.NumberU64(),
+		GasLimit:         genesisBlock.GasLimit(),
+		GasUsed:          genesisBlock.GasUsed(),
+		Timestamp:        genesisBlock.Time(),
+		ExtraData:        extra,
+		BaseFeePerGas:    baseFee,
+		BlockHash:        phase0.Hash32(genesisBlockHash),
+		TransactionsRoot: transactionsRoot,
+		WithdrawalsRoot:  withdrawalsRoot,
+		BlobGasUsed:      *genesisBlock.BlobGasUsed(),
+		ExcessBlobGas:    *genesisBlock.ExcessBlobGas(),
+	}
+
+	depositRoot, err := utils.ComputeDepositRoot(b.clConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute deposit root: %w", err)
+	}
+
+	syncCommitteeSize := b.clConfig.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
+	syncCommitteeMaskBytes := syncCommitteeSize / 8
+
+	if syncCommitteeSize%8 != 0 {
+		syncCommitteeMaskBytes++
+	}
+
+	genesisBlockBody := &electra.BeaconBlockBody{
+		ETH1Data: &phase0.ETH1Data{
+			BlockHash: make([]byte, 32),
+		},
+		SyncAggregate: &altair.SyncAggregate{
+			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
+		},
+		ExecutionPayload: &deneb.ExecutionPayload{
+			BaseFeePerGas: uint256.NewInt(0),
+		},
+		ExecutionRequests: &electra.ExecutionRequests{},
+	}
+
+	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute genesis block body root: %w", err)
+	}
+
+	clValidators, validatorsRoot := utils.GetGenesisValidators(b.clConfig, b.validators)
+
+	syncCommittee, err := utils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get genesis sync committee: %w", err)
+	}
+
+	proposers, err := utils.GetGenesisProposers(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate proposer lookahead: %w", err)
+	}
+
+	genesisDelay := b.clConfig.GetUintDefault("GENESIS_DELAY", 604800)
+	blocksPerHistoricalRoot := b.clConfig.GetUintDefault("SLOTS_PER_HISTORICAL_ROOT", 8192)
+	epochsPerSlashingVector := b.clConfig.GetUintDefault("EPOCHS_PER_SLASHINGS_VECTOR", 8192)
+
+	minGenesisTime := b.clConfig.GetUintDefault("MIN_GENESIS_TIME", 0)
+	if minGenesisTime == 0 {
+		minGenesisTime = genesisBlock.Time()
+	}
+
+	genesisState := &fulu.BeaconState{
+		GenesisTime:           minGenesisTime + genesisDelay,
+		GenesisValidatorsRoot: validatorsRoot,
+		Fork:                  GetStateForkConfig(spec.DataVersionFulu, b.clConfig),
+		LatestBlockHeader: &phase0.BeaconBlockHeader{
+			BodyRoot: genesisBlockBodyRoot,
+		},
+		BlockRoots: make([]phase0.Root, blocksPerHistoricalRoot),
+		StateRoots: make([]phase0.Root, blocksPerHistoricalRoot),
+		ETH1Data: &phase0.ETH1Data{
+			DepositRoot: depositRoot,
+			BlockHash:   genesisBlockHash[:],
+		},
+		JustificationBits:            make([]byte, 1),
+		PreviousJustifiedCheckpoint:  &phase0.Checkpoint{},
+		CurrentJustifiedCheckpoint:   &phase0.Checkpoint{},
+		FinalizedCheckpoint:          &phase0.Checkpoint{},
+		RANDAOMixes:                  utils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
+		Validators:                   clValidators,
+		Balances:                     utils.GetGenesisBalances(b.clConfig, b.validators),
+		Slashings:                    make([]phase0.Gwei, epochsPerSlashingVector),
+		PreviousEpochParticipation:   make([]altair.ParticipationFlags, len(clValidators)),
+		CurrentEpochParticipation:    make([]altair.ParticipationFlags, len(clValidators)),
+		InactivityScores:             make([]uint64, len(clValidators)),
+		CurrentSyncCommittee:         syncCommittee,
+		NextSyncCommittee:            syncCommittee,
+		LatestExecutionPayloadHeader: execHeader,
+		ProposerLookahead:            proposers,
+	}
+
+	versionedState := &spec.VersionedBeaconState{
+		Version: spec.DataVersionFulu,
+		Fulu:    genesisState,
+	}
+
+	logrus.Infof("genesis version: fulu")
+	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
+	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
+
+	return versionedState, nil
+}
+
+func (b *fuluBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
+	if state.Version != spec.DataVersionFulu {
+		return nil, fmt.Errorf("unsupported version: %s", state.Version)
+	}
+
+	switch contentType {
+	case http.ContentTypeSSZ:
+		return b.dynSsz.MarshalSSZ(state.Fulu)
+	case http.ContentTypeJSON:
+		return state.Fulu.MarshalJSON()
+	default:
+		return nil, fmt.Errorf("unsupported content type: %s", contentType)
+	}
+}

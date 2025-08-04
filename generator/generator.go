@@ -65,6 +65,12 @@ var ForkConfigs = []ForkConfig{
 		VersionField: "ELECTRA_FORK_VERSION",
 		BuilderFn:    NewElectraBuilder,
 	},
+	{
+		Version:      spec.DataVersionFulu,
+		EpochField:   "FULU_FORK_EPOCH",
+		VersionField: "FULU_FORK_VERSION",
+		BuilderFn:    NewFuluBuilder,
+	},
 }
 
 func init() {
