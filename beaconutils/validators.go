@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"github.com/attestantio/go-eth2-client/spec/phase0"
@@ -8,20 +8,20 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
-func GetGenesisValidators(config *config.Config, validators []*validators.Validator) ([]*phase0.Validator, phase0.Root) {
+func GetGenesisValidators(cfg *config.Config, vals []*validators.Validator) ([]*phase0.Validator, phase0.Root) {
 	// Process activations
-	maxEffectiveBalance := phase0.Gwei(config.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
-	maxEffectiveBalanceElectra := phase0.Gwei(config.GetUintDefault("MAX_EFFECTIVE_BALANCE_ELECTRA", 2_048_000_000_000))
+	maxEffectiveBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
+	maxEffectiveBalanceElectra := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE_ELECTRA", 2_048_000_000_000))
 	isElectraActive := false
 
-	if electraActivationEpoch, ok := config.GetUint("ELECTRA_FORK_EPOCH"); ok && electraActivationEpoch == 0 {
+	if electraActivationEpoch, ok := cfg.GetUint("ELECTRA_FORK_EPOCH"); ok && electraActivationEpoch == 0 {
 		isElectraActive = true
 	}
 
-	clValidators := make([]*phase0.Validator, 0, len(validators))
+	clValidators := make([]*phase0.Validator, 0, len(vals))
 
-	for i := 0; i < len(validators); i++ {
-		val := validators[i]
+	for i := 0; i < len(vals); i++ {
+		val := vals[i]
 
 		if val == nil {
 			return nil, phase0.Root{}
@@ -49,10 +49,10 @@ func GetGenesisValidators(config *config.Config, validators []*validators.Valida
 			PublicKey:                  val.PublicKey,
 			WithdrawalCredentials:      val.WithdrawalCredentials,
 			EffectiveBalance:           effectiveBalance,
-			ActivationEligibilityEpoch: phase0.Epoch(config.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
-			ActivationEpoch:            phase0.Epoch(config.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
-			ExitEpoch:                  phase0.Epoch(config.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
-			WithdrawableEpoch:          phase0.Epoch(config.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
+			ActivationEligibilityEpoch: phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
+			ActivationEpoch:            phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
+			ExitEpoch:                  phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
+			WithdrawableEpoch:          phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
 		}
 
 		if effectiveBalance >= maxEffectiveBalance {
@@ -63,7 +63,7 @@ func GetGenesisValidators(config *config.Config, validators []*validators.Valida
 		clValidators = append(clValidators, validator)
 	}
 
-	maxValidators := config.GetUintDefault("VALIDATOR_REGISTRY_LIMIT", 1099511627776)
+	maxValidators := cfg.GetUintDefault("VALIDATOR_REGISTRY_LIMIT", 1099511627776)
 	validatorsRoot, err := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
 		for _, elem := range clValidators {
 			if err := elem.HashTreeRootWith(hh); err != nil {
@@ -83,11 +83,11 @@ func GetGenesisValidators(config *config.Config, validators []*validators.Valida
 	return clValidators, validatorsRoot
 }
 
-func GetGenesisBalances(config *config.Config, validators []*validators.Validator) []phase0.Gwei {
-	maxEffectiveBalance := phase0.Gwei(config.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
-	balances := make([]phase0.Gwei, len(validators))
+func GetGenesisBalances(cfg *config.Config, vals []*validators.Validator) []phase0.Gwei {
+	maxEffectiveBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
+	balances := make([]phase0.Gwei, len(vals))
 
-	for i, validator := range validators {
+	for i, validator := range vals {
 		if validator.Balance != nil {
 			balances[i] = phase0.Gwei(*validator.Balance)
 		} else {

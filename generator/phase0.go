@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
 	"github.com/ethpandaops/eth-beacon-genesis/config"
-	"github.com/ethpandaops/eth-beacon-genesis/utils"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
@@ -28,7 +28,7 @@ func NewPhase0Builder(elGenesis *core.Genesis, clConfig *config.Config) GenesisB
 	return &phase0Builder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
-		dynSsz:    utils.GetDynSSZ(clConfig),
+		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
@@ -36,8 +36,8 @@ func (b *phase0Builder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *phase0Builder) AddValidators(validators []*validators.Validator) {
-	b.validators = append(b.validators, validators...)
+func (b *phase0Builder) AddValidators(val []*validators.Validator) {
+	b.validators = append(b.validators, val...)
 }
 
 func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
@@ -53,7 +53,7 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("extra data is %d bytes, max is %d", len(extra), 32)
 	}
 
-	depositRoot, err := utils.ComputeDepositRoot(b.clConfig)
+	depositRoot, err := beaconutils.ComputeDepositRoot(b.clConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute deposit root: %w", err)
 	}
@@ -69,7 +69,7 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute genesis block body root: %w", err)
 	}
 
-	clValidators, validatorsRoot := utils.GetGenesisValidators(b.clConfig, b.validators)
+	clValidators, validatorsRoot := beaconutils.GetGenesisValidators(b.clConfig, b.validators)
 
 	genesisDelay := b.clConfig.GetUintDefault("GENESIS_DELAY", 604800)
 	blocksPerHistoricalRoot := b.clConfig.GetUintDefault("SLOTS_PER_HISTORICAL_ROOT", 8192)
@@ -97,9 +97,9 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 		PreviousJustifiedCheckpoint: &phase0.Checkpoint{},
 		CurrentJustifiedCheckpoint:  &phase0.Checkpoint{},
 		FinalizedCheckpoint:         &phase0.Checkpoint{},
-		RANDAOMixes:                 utils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
+		RANDAOMixes:                 beaconutils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
 		Validators:                  clValidators,
-		Balances:                    utils.GetGenesisBalances(b.clConfig, b.validators),
+		Balances:                    beaconutils.GetGenesisBalances(b.clConfig, b.validators),
 		Slashings:                   make([]phase0.Gwei, epochsPerSlashingVector),
 	}
 

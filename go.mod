@@ -82,3 +82,5 @@ require (
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace github.com/attestantio/go-eth2-client => github.com/attestantio/go-eth2-client v0.0.0-20250721122214-dc2928832acc

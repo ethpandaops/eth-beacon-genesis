@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"bytes"
@@ -107,10 +107,10 @@ func TestGetGenesisValidators(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := createTestConfig(t, tt.preset, tt.configValues)
 
-			validators, root := GetGenesisValidators(cfg, tt.validators)
+			vals, root := GetGenesisValidators(cfg, tt.validators)
 
 			if tt.expectedError {
-				if validators != nil {
+				if vals != nil {
 					t.Error("expected error but got validators")
 				}
 
@@ -118,8 +118,8 @@ func TestGetGenesisValidators(t *testing.T) {
 			}
 
 			// Check number of validators
-			if len(validators) != tt.expectedValidators {
-				t.Errorf("wrong number of validators: got %v, want %v", len(validators), tt.expectedValidators)
+			if len(vals) != tt.expectedValidators {
+				t.Errorf("wrong number of validators: got %v, want %v", len(vals), tt.expectedValidators)
 			}
 
 			// Check root
@@ -135,7 +135,7 @@ func TestGetGenesisValidators(t *testing.T) {
 			// Check activations
 			activations := 0
 
-			for _, v := range validators {
+			for _, v := range vals {
 				if v.ActivationEpoch == 0 {
 					activations++
 				}

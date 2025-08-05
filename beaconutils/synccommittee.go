@@ -1,4 +1,4 @@
-package utils
+package beaconutils
 
 import (
 	"crypto/sha256"
@@ -12,7 +12,7 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/config"
 )
 
-func GetGenesisSyncCommittee(config *config.Config, validators []*phase0.Validator, randaoMix phase0.Hash32) (*altair.SyncCommittee, error) {
+func GetGenesisSyncCommittee(cfg *config.Config, validators []*phase0.Validator, randaoMix phase0.Hash32) (*altair.SyncCommittee, error) {
 	activeIndices := make([]phase0.ValidatorIndex, 0, len(validators))
 
 	for index, validator := range validators {
@@ -23,10 +23,10 @@ func GetGenesisSyncCommittee(config *config.Config, validators []*phase0.Validat
 
 	var committeeIndices []phase0.ValidatorIndex
 
-	if electraActivationEpoch, ok := config.GetUint("ELECTRA_FORK_EPOCH"); ok && electraActivationEpoch == 0 {
-		committeeIndices = computeGenesisSyncCommitteeIndicesElectra(config, activeIndices, validators, randaoMix)
+	if electraActivationEpoch, ok := cfg.GetUint("ELECTRA_FORK_EPOCH"); ok && electraActivationEpoch == 0 {
+		committeeIndices = computeGenesisSyncCommitteeIndicesElectra(cfg, activeIndices, validators, randaoMix)
 	} else {
-		committeeIndices = computeGenesisSyncCommitteeIndices(config, activeIndices, validators, randaoMix)
+		committeeIndices = computeGenesisSyncCommitteeIndices(cfg, activeIndices, validators, randaoMix)
 	}
 
 	syncCommittee := &altair.SyncCommittee{
@@ -61,11 +61,11 @@ func GetGenesisSyncCommittee(config *config.Config, validators []*phase0.Validat
 // for the next sync committee, given a state at a sync committee period boundary.
 //
 // Note: Committee can contain duplicate indices for small validator sets (< SYNC_COMMITTEE_SIZE + 128)
-func computeGenesisSyncCommitteeIndices(config *config.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
-	syncCommitteeSize := config.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
-	shuffleRoundCount := config.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
-	maxEffectiveBalance := config.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
-	domainSyncCommittee := config.GetBytesDefault("DOMAIN_SYNC_COMMITTEE", []byte{0x07, 0x00, 0x00, 0x00})
+func computeGenesisSyncCommitteeIndices(cfg *config.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
+	syncCommitteeSize := cfg.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
+	shuffleRoundCount := cfg.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
+	maxEffectiveBalance := cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
+	domainSyncCommittee := cfg.GetBytesDefault("DOMAIN_SYNC_COMMITTEE", []byte{0x07, 0x00, 0x00, 0x00})
 	syncCommitteeIndices := make([]phase0.ValidatorIndex, 0, syncCommitteeSize)
 	periodSeed := computeGenesisSeed(randaoMix, 0, phase0.DomainType(domainSyncCommittee))
 
@@ -110,11 +110,11 @@ func computeGenesisSyncCommitteeIndices(config *config.Config, active []phase0.V
 	return syncCommitteeIndices
 }
 
-func computeGenesisSyncCommitteeIndicesElectra(config *config.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
-	syncCommitteeSize := config.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
-	shuffleRoundCount := config.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
-	maxEffectiveBalance := config.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
-	domainSyncCommittee := config.GetBytesDefault("DOMAIN_SYNC_COMMITTEE", []byte{0x07, 0x00, 0x00, 0x00})
+func computeGenesisSyncCommitteeIndicesElectra(cfg *config.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
+	syncCommitteeSize := cfg.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
+	shuffleRoundCount := cfg.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
+	maxEffectiveBalance := cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
+	domainSyncCommittee := cfg.GetBytesDefault("DOMAIN_SYNC_COMMITTEE", []byte{0x07, 0x00, 0x00, 0x00})
 	syncCommitteeIndices := make([]phase0.ValidatorIndex, 0, syncCommitteeSize)
 	periodSeed := computeGenesisSeed(randaoMix, 0, phase0.DomainType(domainSyncCommittee))
 
