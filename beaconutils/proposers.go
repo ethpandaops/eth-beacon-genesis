@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	"github.com/attestantio/go-eth2-client/spec/phase0"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
 
 // GetGenesisProposers returns the proposer indices for the first 2 epochs
-func GetGenesisProposers(clConfig *config.Config, validators []*phase0.Validator, genesisBlockHash phase0.Hash32) ([]phase0.ValidatorIndex, error) {
+func GetGenesisProposers(clConfig *beaconconfig.Config, validators []*phase0.Validator, genesisBlockHash phase0.Hash32) ([]phase0.ValidatorIndex, error) {
 	// Get configuration values
 	slotsPerEpoch := clConfig.GetUintDefault("SLOTS_PER_EPOCH", 32)
 	totalSlots := slotsPerEpoch * 2 // First 2 epochs
@@ -39,7 +39,7 @@ func GetGenesisProposers(clConfig *config.Config, validators []*phase0.Validator
 }
 
 // computeProposerIndex calculates the proposer for a given slot
-func computeProposerIndex(clConfig *config.Config, validators []*phase0.Validator, activeIndices []phase0.ValidatorIndex, slot phase0.Slot, genesisBlockHash phase0.Hash32) phase0.ValidatorIndex {
+func computeProposerIndex(clConfig *beaconconfig.Config, validators []*phase0.Validator, activeIndices []phase0.ValidatorIndex, slot phase0.Slot, genesisBlockHash phase0.Hash32) phase0.ValidatorIndex {
 	slotsPerEpoch := clConfig.GetUintDefault("SLOTS_PER_EPOCH", 32)
 	epoch := phase0.Epoch(uint64(slot) / slotsPerEpoch)
 

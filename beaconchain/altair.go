@@ -12,20 +12,20 @@ import (
 	dynssz "github.com/pk910/dynamic-ssz"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
 type altairBuilder struct {
 	elGenesis       *core.Genesis
-	clConfig        *config.Config
+	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
 	validators      []*validators.Validator
 }
 
-func NewAltairBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
+func NewAltairBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
 	return &altairBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,

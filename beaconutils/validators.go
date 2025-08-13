@@ -4,11 +4,11 @@ import (
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	ssz "github.com/ferranbt/fastssz"
 
-	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
-func GetGenesisValidators(cfg *config.Config, vals []*validators.Validator) ([]*phase0.Validator, phase0.Root) {
+func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator) ([]*phase0.Validator, phase0.Root) {
 	// Process activations
 	maxEffectiveBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
 	maxEffectiveBalanceElectra := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE_ELECTRA", 2_048_000_000_000))
@@ -83,7 +83,7 @@ func GetGenesisValidators(cfg *config.Config, vals []*validators.Validator) ([]*
 	return clValidators, validatorsRoot
 }
 
-func GetGenesisBalances(cfg *config.Config, vals []*validators.Validator) []phase0.Gwei {
+func GetGenesisBalances(cfg *beaconconfig.Config, vals []*validators.Validator) []phase0.Gwei {
 	maxEffectiveBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
 	balances := make([]phase0.Gwei, len(vals))
 

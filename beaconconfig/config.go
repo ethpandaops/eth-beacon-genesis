@@ -1,4 +1,4 @@
-package config
+package beaconconfig
 
 import (
 	"encoding/binary"
@@ -10,7 +10,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/ethpandaops/eth-beacon-genesis/config/presets"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig/presets"
 )
 
 type Config struct {

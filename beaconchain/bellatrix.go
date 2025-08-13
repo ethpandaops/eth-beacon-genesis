@@ -13,21 +13,21 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
 type bellatrixBuilder struct {
 	elGenesis       *core.Genesis
-	clConfig        *config.Config
+	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
 	validators      []*validators.Validator
 }
 
-func NewBellatrixBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
+func NewBellatrixBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
 	return &bellatrixBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,

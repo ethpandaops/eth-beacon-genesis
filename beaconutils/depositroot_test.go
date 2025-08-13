@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"gopkg.in/yaml.v3"
 )
 
-func createTestConfig(t *testing.T, preset string, values map[string]interface{}) *config.Config {
+func createTestConfig(t *testing.T, preset string, values map[string]interface{}) *beaconconfig.Config {
 	t.Helper()
 
 	// Ensure PRESET_BASE is set
@@ -49,7 +49,7 @@ func createTestConfig(t *testing.T, preset string, values map[string]interface{}
 	}
 
 	// Load config
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := beaconconfig.LoadConfig(configPath)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}

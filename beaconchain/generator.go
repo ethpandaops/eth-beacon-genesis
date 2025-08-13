@@ -8,11 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	hbls "github.com/herumi/bls-eth-go-binary/bls"
 
-	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
-type NewBeaconGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder
+type NewBeaconGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder
 
 type BeaconGenesisBuilder interface {
 	SetShadowForkBlock(block *types.Block)
@@ -80,7 +80,7 @@ func init() {
 	hbls.SetETHmode(hbls.EthModeLatest)
 }
 
-func GetGenesisForkVersion(clConfig *config.Config) spec.DataVersion {
+func GetGenesisForkVersion(clConfig *beaconconfig.Config) spec.DataVersion {
 	for i := len(ForkConfigs) - 1; i >= 1; i-- {
 		if epoch, found := clConfig.GetUint(ForkConfigs[i].EpochField); found && epoch == 0 {
 			return ForkConfigs[i].Version
@@ -100,7 +100,7 @@ func GetForkConfig(version spec.DataVersion) *ForkConfig {
 	return nil
 }
 
-func GetStateForkConfig(version spec.DataVersion, cfg *config.Config) *phase0.Fork {
+func GetStateForkConfig(version spec.DataVersion, cfg *beaconconfig.Config) *phase0.Fork {
 	thisForkConfig := GetForkConfig(version)
 
 	var prevForkConfig *ForkConfig
@@ -121,7 +121,7 @@ func GetStateForkConfig(version spec.DataVersion, cfg *config.Config) *phase0.Fo
 	}
 }
 
-func NewGenesisBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
+func NewGenesisBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
 	forkVersion := GetGenesisForkVersion(clConfig)
 	forkConfig := GetForkConfig(forkVersion)
 

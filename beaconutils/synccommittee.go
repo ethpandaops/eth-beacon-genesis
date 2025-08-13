@@ -9,10 +9,10 @@ import (
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	blsu "github.com/protolambda/bls12-381-util"
 
-	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
 
-func GetGenesisSyncCommittee(cfg *config.Config, validators []*phase0.Validator, randaoMix phase0.Hash32) (*altair.SyncCommittee, error) {
+func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Validator, randaoMix phase0.Hash32) (*altair.SyncCommittee, error) {
 	activeIndices := make([]phase0.ValidatorIndex, 0, len(validators))
 
 	for index, validator := range validators {
@@ -61,7 +61,7 @@ func GetGenesisSyncCommittee(cfg *config.Config, validators []*phase0.Validator,
 // for the next sync committee, given a state at a sync committee period boundary.
 //
 // Note: Committee can contain duplicate indices for small validator sets (< SYNC_COMMITTEE_SIZE + 128)
-func computeGenesisSyncCommitteeIndices(cfg *config.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
+func computeGenesisSyncCommitteeIndices(cfg *beaconconfig.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
 	syncCommitteeSize := cfg.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
 	shuffleRoundCount := cfg.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
 	maxEffectiveBalance := cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
@@ -110,7 +110,7 @@ func computeGenesisSyncCommitteeIndices(cfg *config.Config, active []phase0.Vali
 	return syncCommitteeIndices
 }
 
-func computeGenesisSyncCommitteeIndicesElectra(cfg *config.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
+func computeGenesisSyncCommitteeIndicesElectra(cfg *beaconconfig.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
 	syncCommitteeSize := cfg.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
 	shuffleRoundCount := cfg.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
 	maxEffectiveBalance := cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
