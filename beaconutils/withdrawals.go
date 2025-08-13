@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	ssz "github.com/ferranbt/fastssz"
 
-	"github.com/ethpandaops/eth-beacon-genesis/config"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
 
-func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, cfg *config.Config) (phase0.Root, error) {
+func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, cfg *beaconconfig.Config) (phase0.Root, error) {
 	// Compute the SSZ hash-tree-root of the withdrawals,
 	// since that is what we put as withdrawals_root in the CL execution-payload.
 	// Not to be confused with the legacy MPT root in the EL block header.

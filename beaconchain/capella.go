@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -7,45 +7,44 @@ import (
 	"github.com/attestantio/go-eth2-client/spec"
 	"github.com/attestantio/go-eth2-client/spec/altair"
 	"github.com/attestantio/go-eth2-client/spec/bellatrix"
-	"github.com/attestantio/go-eth2-client/spec/deneb"
-	"github.com/attestantio/go-eth2-client/spec/electra"
+	"github.com/attestantio/go-eth2-client/spec/capella"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
-type electraBuilder struct {
+type capellaBuilder struct {
 	elGenesis       *core.Genesis
-	clConfig        *config.Config
+	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
 	validators      []*validators.Validator
 }
 
-func NewElectraBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
-	return &electraBuilder{
+func NewCapellaBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
+	return &capellaBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
 		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
-func (b *electraBuilder) SetShadowForkBlock(block *types.Block) {
+func (b *capellaBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *electraBuilder) AddValidators(val []*validators.Validator) {
+func (b *capellaBuilder) AddValidators(val []*validators.Validator) {
 	b.validators = append(b.validators, val...)
 }
 
-func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
+func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisBlock := b.shadowForkBlock
 	if genesisBlock == nil {
 		genesisBlock = b.elGenesis.ToBlock()
@@ -76,15 +75,12 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute transactions root: %w", err)
 	}
 
-	if genesisBlock.BlobGasUsed() == nil {
-		return nil, fmt.Errorf("execution-layer Block has missing blob-gas-used field")
+	baseFeeBytes := baseFee.Bytes32()
+	for i, j := 0, len(baseFeeBytes)-1; i < j; i, j = i+1, j-1 {
+		baseFeeBytes[i], baseFeeBytes[j] = baseFeeBytes[j], baseFeeBytes[i]
 	}
 
-	if genesisBlock.ExcessBlobGas() == nil {
-		return nil, fmt.Errorf("execution-layer Block has missing excess-blob-gas field")
-	}
-
-	execHeader := &deneb.ExecutionPayloadHeader{
+	execHeader := &capella.ExecutionPayloadHeader{
 		ParentHash:       phase0.Hash32(genesisBlock.ParentHash()),
 		FeeRecipient:     bellatrix.ExecutionAddress(genesisBlock.Coinbase()),
 		StateRoot:        phase0.Root(genesisBlock.Root()),
@@ -95,12 +91,10 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		GasUsed:          genesisBlock.GasUsed(),
 		Timestamp:        genesisBlock.Time(),
 		ExtraData:        extra,
-		BaseFeePerGas:    baseFee,
+		BaseFeePerGas:    baseFeeBytes,
 		BlockHash:        phase0.Hash32(genesisBlockHash),
 		TransactionsRoot: transactionsRoot,
 		WithdrawalsRoot:  withdrawalsRoot,
-		BlobGasUsed:      *genesisBlock.BlobGasUsed(),
-		ExcessBlobGas:    *genesisBlock.ExcessBlobGas(),
 	}
 
 	depositRoot, err := beaconutils.ComputeDepositRoot(b.clConfig)
@@ -115,17 +109,14 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		syncCommitteeMaskBytes++
 	}
 
-	genesisBlockBody := &electra.BeaconBlockBody{
+	genesisBlockBody := &capella.BeaconBlockBody{
 		ETH1Data: &phase0.ETH1Data{
 			BlockHash: make([]byte, 32),
 		},
 		SyncAggregate: &altair.SyncAggregate{
 			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
 		},
-		ExecutionPayload: &deneb.ExecutionPayload{
-			BaseFeePerGas: uint256.NewInt(0),
-		},
-		ExecutionRequests: &electra.ExecutionRequests{},
+		ExecutionPayload: &capella.ExecutionPayload{},
 	}
 
 	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
@@ -149,10 +140,10 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		minGenesisTime = genesisBlock.Time()
 	}
 
-	genesisState := &electra.BeaconState{
+	genesisState := &capella.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionElectra, b.clConfig),
+		Fork:                  GetStateForkConfig(spec.DataVersionCapella, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
@@ -179,27 +170,27 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	}
 
 	versionedState := &spec.VersionedBeaconState{
-		Version: spec.DataVersionElectra,
-		Electra: genesisState,
+		Version: spec.DataVersionCapella,
+		Capella: genesisState,
 	}
 
-	logrus.Infof("genesis version: electra")
+	logrus.Infof("genesis version: capella")
 	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
 	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
 
 	return versionedState, nil
 }
 
-func (b *electraBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
-	if state.Version != spec.DataVersionElectra {
+func (b *capellaBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
+	if state.Version != spec.DataVersionCapella {
 		return nil, fmt.Errorf("unsupported version: %s", state.Version)
 	}
 
 	switch contentType {
 	case http.ContentTypeSSZ:
-		return b.dynSsz.MarshalSSZ(state.Electra)
+		return b.dynSsz.MarshalSSZ(state.Capella)
 	case http.ContentTypeJSON:
-		return state.Electra.MarshalJSON()
+		return state.Capella.MarshalJSON()
 	default:
 		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}

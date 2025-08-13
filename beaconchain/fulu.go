@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -7,44 +7,46 @@ import (
 	"github.com/attestantio/go-eth2-client/spec"
 	"github.com/attestantio/go-eth2-client/spec/altair"
 	"github.com/attestantio/go-eth2-client/spec/bellatrix"
-	"github.com/attestantio/go-eth2-client/spec/capella"
+	"github.com/attestantio/go-eth2-client/spec/deneb"
+	"github.com/attestantio/go-eth2-client/spec/electra"
+	"github.com/attestantio/go-eth2-client/spec/fulu"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
-type capellaBuilder struct {
+type fuluBuilder struct {
 	elGenesis       *core.Genesis
-	clConfig        *config.Config
+	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
 	validators      []*validators.Validator
 }
 
-func NewCapellaBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
-	return &capellaBuilder{
+func NewFuluBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
+	return &fuluBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
 		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
-func (b *capellaBuilder) SetShadowForkBlock(block *types.Block) {
+func (b *fuluBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *capellaBuilder) AddValidators(val []*validators.Validator) {
+func (b *fuluBuilder) AddValidators(val []*validators.Validator) {
 	b.validators = append(b.validators, val...)
 }
 
-func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
+func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisBlock := b.shadowForkBlock
 	if genesisBlock == nil {
 		genesisBlock = b.elGenesis.ToBlock()
@@ -75,12 +77,15 @@ func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute transactions root: %w", err)
 	}
 
-	baseFeeBytes := baseFee.Bytes32()
-	for i, j := 0, len(baseFeeBytes)-1; i < j; i, j = i+1, j-1 {
-		baseFeeBytes[i], baseFeeBytes[j] = baseFeeBytes[j], baseFeeBytes[i]
+	if genesisBlock.BlobGasUsed() == nil {
+		return nil, fmt.Errorf("execution-layer Block has missing blob-gas-used field")
 	}
 
-	execHeader := &capella.ExecutionPayloadHeader{
+	if genesisBlock.ExcessBlobGas() == nil {
+		return nil, fmt.Errorf("execution-layer Block has missing excess-blob-gas field")
+	}
+
+	execHeader := &deneb.ExecutionPayloadHeader{
 		ParentHash:       phase0.Hash32(genesisBlock.ParentHash()),
 		FeeRecipient:     bellatrix.ExecutionAddress(genesisBlock.Coinbase()),
 		StateRoot:        phase0.Root(genesisBlock.Root()),
@@ -91,10 +96,12 @@ func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		GasUsed:          genesisBlock.GasUsed(),
 		Timestamp:        genesisBlock.Time(),
 		ExtraData:        extra,
-		BaseFeePerGas:    baseFeeBytes,
+		BaseFeePerGas:    baseFee,
 		BlockHash:        phase0.Hash32(genesisBlockHash),
 		TransactionsRoot: transactionsRoot,
 		WithdrawalsRoot:  withdrawalsRoot,
+		BlobGasUsed:      *genesisBlock.BlobGasUsed(),
+		ExcessBlobGas:    *genesisBlock.ExcessBlobGas(),
 	}
 
 	depositRoot, err := beaconutils.ComputeDepositRoot(b.clConfig)
@@ -109,14 +116,17 @@ func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		syncCommitteeMaskBytes++
 	}
 
-	genesisBlockBody := &capella.BeaconBlockBody{
+	genesisBlockBody := &electra.BeaconBlockBody{
 		ETH1Data: &phase0.ETH1Data{
 			BlockHash: make([]byte, 32),
 		},
 		SyncAggregate: &altair.SyncAggregate{
 			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
 		},
-		ExecutionPayload: &capella.ExecutionPayload{},
+		ExecutionPayload: &deneb.ExecutionPayload{
+			BaseFeePerGas: uint256.NewInt(0),
+		},
+		ExecutionRequests: &electra.ExecutionRequests{},
 	}
 
 	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
@@ -131,6 +141,11 @@ func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to get genesis sync committee: %w", err)
 	}
 
+	proposers, err := beaconutils.GetGenesisProposers(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate proposer lookahead: %w", err)
+	}
+
 	genesisDelay := b.clConfig.GetUintDefault("GENESIS_DELAY", 604800)
 	blocksPerHistoricalRoot := b.clConfig.GetUintDefault("SLOTS_PER_HISTORICAL_ROOT", 8192)
 	epochsPerSlashingVector := b.clConfig.GetUintDefault("EPOCHS_PER_SLASHINGS_VECTOR", 8192)
@@ -140,10 +155,10 @@ func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		minGenesisTime = genesisBlock.Time()
 	}
 
-	genesisState := &capella.BeaconState{
+	genesisState := &fulu.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionCapella, b.clConfig),
+		Fork:                  GetStateForkConfig(spec.DataVersionFulu, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
@@ -167,30 +182,31 @@ func (b *capellaBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		CurrentSyncCommittee:         syncCommittee,
 		NextSyncCommittee:            syncCommittee,
 		LatestExecutionPayloadHeader: execHeader,
+		ProposerLookahead:            proposers,
 	}
 
 	versionedState := &spec.VersionedBeaconState{
-		Version: spec.DataVersionCapella,
-		Capella: genesisState,
+		Version: spec.DataVersionFulu,
+		Fulu:    genesisState,
 	}
 
-	logrus.Infof("genesis version: capella")
+	logrus.Infof("genesis version: fulu")
 	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
 	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
 
 	return versionedState, nil
 }
 
-func (b *capellaBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
-	if state.Version != spec.DataVersionCapella {
+func (b *fuluBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
+	if state.Version != spec.DataVersionFulu {
 		return nil, fmt.Errorf("unsupported version: %s", state.Version)
 	}
 
 	switch contentType {
 	case http.ContentTypeSSZ:
-		return b.dynSsz.MarshalSSZ(state.Capella)
+		return b.dynSsz.MarshalSSZ(state.Fulu)
 	case http.ContentTypeJSON:
-		return state.Capella.MarshalJSON()
+		return state.Fulu.MarshalJSON()
 	default:
 		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}

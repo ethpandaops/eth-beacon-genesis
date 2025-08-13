@@ -11,10 +11,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconchain"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/buildinfo"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/eth1"
-	"github.com/ethpandaops/eth-beacon-genesis/generator"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
@@ -61,19 +61,20 @@ var (
 	}
 
 	app = &cli.Command{
-		Name:  "eth-beacon-genesis",
-		Usage: "Generate the Ethereum 2.0 Beacon Chain genesis state",
+		Name:  "eth-genesis-state-generator",
+		Usage: "Generate ethereum consensus layer genesis states for testnets",
 		Commands: []*cli.Command{
 			{
-				Name:  "devnet",
-				Usage: "Generate a devnet genesis state",
+				Name:    "beaconchain",
+				Usage:   "Generate a beaconchain genesis state",
+				Aliases: []string{"bc", "beacon", "devnet"},
 				Flags: []cli.Flag{
 					eth1ConfigFlag, configFlag, mnemonicsFileFlag, validatorsFileFlag,
 					shadowForkBlockFlag, shadowForkRPCFlag, stateOutputFlag, jsonOutputFlag,
 					quietFlag,
 				},
 				Action:    runDevnet,
-				UsageText: "eth-beacon-genesis devnet [options]",
+				UsageText: "eth-beacon-genesis beaconchain [options]",
 			},
 			{
 				Name:  "version",
@@ -85,7 +86,7 @@ var (
 				},
 			},
 		},
-		DefaultCommand: "devnet",
+		DefaultCommand: "help",
 	}
 )
 
@@ -121,7 +122,7 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 
 	logrus.Infof("loaded execution genesis. chainid: %v", elGenesis.Config.ChainID.String())
 
-	clConfig, err := config.LoadConfig(eth2Config)
+	clConfig, err := beaconconfig.LoadConfig(eth2Config)
 	if err != nil {
 		return fmt.Errorf("failed to load consensus config: %w", err)
 	}
@@ -169,7 +170,7 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 
 	logrus.Infof("loaded %d validators. total balance: %d ETH", len(clValidators), totalBalance/1_000_000_000)
 
-	builder := generator.NewGenesisBuilder(elGenesis, clConfig)
+	builder := beaconchain.NewGenesisBuilder(elGenesis, clConfig)
 	builder.AddValidators(clValidators)
 
 	if shadowForkBlock != "" || shadowForkRPC != "" {

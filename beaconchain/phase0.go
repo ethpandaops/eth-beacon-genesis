@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -10,21 +10,21 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
 type phase0Builder struct {
 	elGenesis       *core.Genesis
-	clConfig        *config.Config
+	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
 	validators      []*validators.Validator
 }
 
-func NewPhase0Builder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
+func NewPhase0Builder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
 	return &phase0Builder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,

@@ -20,14 +20,14 @@ Or build from source:
 ```
 git clone https://github.com/ethpandaops/eth-beacon-genesis
 cd eth-beacon-genesis
-go build ./cmd/eth-beacon-genesis
+make
 ```
 ## Usage
 
-Basic usage to generate a devnet genesis state:
+Basic usage to generate a beaconchain genesis state:
 
 ```
-eth-beacon-genesis devnet \
+eth-genesis-state-generator beaconchain \
   --eth1-config genesis.json \
   --config config.yaml \
   --mnemonics mnemonics.yaml \

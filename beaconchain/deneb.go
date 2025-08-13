@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -8,45 +8,43 @@ import (
 	"github.com/attestantio/go-eth2-client/spec/altair"
 	"github.com/attestantio/go-eth2-client/spec/bellatrix"
 	"github.com/attestantio/go-eth2-client/spec/deneb"
-	"github.com/attestantio/go-eth2-client/spec/electra"
-	"github.com/attestantio/go-eth2-client/spec/fulu"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
-type fuluBuilder struct {
+type denebBuilder struct {
 	elGenesis       *core.Genesis
-	clConfig        *config.Config
+	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
 	validators      []*validators.Validator
 }
 
-func NewFuluBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
-	return &fuluBuilder{
+func NewDenebBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
+	return &denebBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
 		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
-func (b *fuluBuilder) SetShadowForkBlock(block *types.Block) {
+func (b *denebBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *fuluBuilder) AddValidators(val []*validators.Validator) {
+func (b *denebBuilder) AddValidators(val []*validators.Validator) {
 	b.validators = append(b.validators, val...)
 }
 
-func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
+func (b *denebBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisBlock := b.shadowForkBlock
 	if genesisBlock == nil {
 		genesisBlock = b.elGenesis.ToBlock()
@@ -116,7 +114,7 @@ func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		syncCommitteeMaskBytes++
 	}
 
-	genesisBlockBody := &electra.BeaconBlockBody{
+	genesisBlockBody := &deneb.BeaconBlockBody{
 		ETH1Data: &phase0.ETH1Data{
 			BlockHash: make([]byte, 32),
 		},
@@ -126,7 +124,6 @@ func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		ExecutionPayload: &deneb.ExecutionPayload{
 			BaseFeePerGas: uint256.NewInt(0),
 		},
-		ExecutionRequests: &electra.ExecutionRequests{},
 	}
 
 	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
@@ -141,11 +138,6 @@ func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to get genesis sync committee: %w", err)
 	}
 
-	proposers, err := beaconutils.GetGenesisProposers(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate proposer lookahead: %w", err)
-	}
-
 	genesisDelay := b.clConfig.GetUintDefault("GENESIS_DELAY", 604800)
 	blocksPerHistoricalRoot := b.clConfig.GetUintDefault("SLOTS_PER_HISTORICAL_ROOT", 8192)
 	epochsPerSlashingVector := b.clConfig.GetUintDefault("EPOCHS_PER_SLASHINGS_VECTOR", 8192)
@@ -155,10 +147,10 @@ func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		minGenesisTime = genesisBlock.Time()
 	}
 
-	genesisState := &fulu.BeaconState{
+	genesisState := &deneb.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionFulu, b.clConfig),
+		Fork:                  GetStateForkConfig(spec.DataVersionDeneb, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
@@ -182,31 +174,30 @@ func (b *fuluBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		CurrentSyncCommittee:         syncCommittee,
 		NextSyncCommittee:            syncCommittee,
 		LatestExecutionPayloadHeader: execHeader,
-		ProposerLookahead:            proposers,
 	}
 
 	versionedState := &spec.VersionedBeaconState{
-		Version: spec.DataVersionFulu,
-		Fulu:    genesisState,
+		Version: spec.DataVersionDeneb,
+		Deneb:   genesisState,
 	}
 
-	logrus.Infof("genesis version: fulu")
+	logrus.Infof("genesis version: deneb")
 	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
 	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
 
 	return versionedState, nil
 }
 
-func (b *fuluBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
-	if state.Version != spec.DataVersionFulu {
+func (b *denebBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
+	if state.Version != spec.DataVersionDeneb {
 		return nil, fmt.Errorf("unsupported version: %s", state.Version)
 	}
 
 	switch contentType {
 	case http.ContentTypeSSZ:
-		return b.dynSsz.MarshalSSZ(state.Fulu)
+		return b.dynSsz.MarshalSSZ(state.Deneb)
 	case http.ContentTypeJSON:
-		return state.Fulu.MarshalJSON()
+		return state.Deneb.MarshalJSON()
 	default:
 		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}
