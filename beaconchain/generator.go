@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"github.com/attestantio/go-eth2-client/http"
@@ -12,9 +12,9 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
-type NewGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder
+type NewBeaconGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder
 
-type GenesisBuilder interface {
+type BeaconGenesisBuilder interface {
 	SetShadowForkBlock(block *types.Block)
 	AddValidators(validators []*validators.Validator)
 	BuildState() (*spec.VersionedBeaconState, error)
@@ -25,7 +25,7 @@ type ForkConfig struct {
 	Version      spec.DataVersion
 	EpochField   string
 	VersionField string
-	BuilderFn    NewGenesisBuilderFn
+	BuilderFn    NewBeaconGenesisBuilderFn
 }
 
 var ForkConfigs = []ForkConfig{
@@ -121,7 +121,7 @@ func GetStateForkConfig(version spec.DataVersion, cfg *config.Config) *phase0.Fo
 	}
 }
 
-func NewGenesisBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
+func NewGenesisBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
 	forkVersion := GetGenesisForkVersion(clConfig)
 	forkConfig := GetForkConfig(forkVersion)
 

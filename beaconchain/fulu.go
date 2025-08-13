@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ type fuluBuilder struct {
 	validators      []*validators.Validator
 }
 
-func NewFuluBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
+func NewFuluBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
 	return &fuluBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,

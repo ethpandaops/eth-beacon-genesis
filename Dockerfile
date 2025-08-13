@@ -19,4 +19,4 @@ FROM debian:stable-slim
 WORKDIR /app
 ENV PATH="$PATH:/app"
 COPY --from=build-env /app/* /app
-ENTRYPOINT ["./eth-beacon-genesis"]
+ENTRYPOINT ["./eth-genesis-state-generator"]

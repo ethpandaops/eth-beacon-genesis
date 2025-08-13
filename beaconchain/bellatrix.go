@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -7,8 +7,6 @@ import (
 	"github.com/attestantio/go-eth2-client/spec"
 	"github.com/attestantio/go-eth2-client/spec/altair"
 	"github.com/attestantio/go-eth2-client/spec/bellatrix"
-	"github.com/attestantio/go-eth2-client/spec/deneb"
-	"github.com/attestantio/go-eth2-client/spec/electra"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -21,7 +19,7 @@ import (
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
-type electraBuilder struct {
+type bellatrixBuilder struct {
 	elGenesis       *core.Genesis
 	clConfig        *config.Config
 	dynSsz          *dynssz.DynSsz
@@ -29,23 +27,23 @@ type electraBuilder struct {
 	validators      []*validators.Validator
 }
 
-func NewElectraBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
-	return &electraBuilder{
+func NewBellatrixBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
+	return &bellatrixBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
 		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
-func (b *electraBuilder) SetShadowForkBlock(block *types.Block) {
+func (b *bellatrixBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *electraBuilder) AddValidators(val []*validators.Validator) {
+func (b *bellatrixBuilder) AddValidators(val []*validators.Validator) {
 	b.validators = append(b.validators, val...)
 }
 
-func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
+func (b *bellatrixBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisBlock := b.shadowForkBlock
 	if genesisBlock == nil {
 		genesisBlock = b.elGenesis.ToBlock()
@@ -60,31 +58,17 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 
 	baseFee, _ := uint256.FromBig(genesisBlock.BaseFee())
 
-	var withdrawalsRoot phase0.Root
-
-	if genesisBlock.Withdrawals() != nil {
-		root, err := beaconutils.ComputeWithdrawalsRoot(genesisBlock.Withdrawals(), b.clConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compute withdrawals root: %w", err)
-		}
-
-		withdrawalsRoot = root
-	}
-
 	transactionsRoot, err := beaconutils.ComputeTransactionsRoot(genesisBlock.Transactions(), b.clConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute transactions root: %w", err)
 	}
 
-	if genesisBlock.BlobGasUsed() == nil {
-		return nil, fmt.Errorf("execution-layer Block has missing blob-gas-used field")
+	baseFeeBytes := baseFee.Bytes32()
+	for i, j := 0, len(baseFeeBytes)-1; i < j; i, j = i+1, j-1 {
+		baseFeeBytes[i], baseFeeBytes[j] = baseFeeBytes[j], baseFeeBytes[i]
 	}
 
-	if genesisBlock.ExcessBlobGas() == nil {
-		return nil, fmt.Errorf("execution-layer Block has missing excess-blob-gas field")
-	}
-
-	execHeader := &deneb.ExecutionPayloadHeader{
+	execHeader := &bellatrix.ExecutionPayloadHeader{
 		ParentHash:       phase0.Hash32(genesisBlock.ParentHash()),
 		FeeRecipient:     bellatrix.ExecutionAddress(genesisBlock.Coinbase()),
 		StateRoot:        phase0.Root(genesisBlock.Root()),
@@ -95,12 +79,9 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		GasUsed:          genesisBlock.GasUsed(),
 		Timestamp:        genesisBlock.Time(),
 		ExtraData:        extra,
-		BaseFeePerGas:    baseFee,
+		BaseFeePerGas:    baseFeeBytes,
 		BlockHash:        phase0.Hash32(genesisBlockHash),
 		TransactionsRoot: transactionsRoot,
-		WithdrawalsRoot:  withdrawalsRoot,
-		BlobGasUsed:      *genesisBlock.BlobGasUsed(),
-		ExcessBlobGas:    *genesisBlock.ExcessBlobGas(),
 	}
 
 	depositRoot, err := beaconutils.ComputeDepositRoot(b.clConfig)
@@ -115,17 +96,14 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		syncCommitteeMaskBytes++
 	}
 
-	genesisBlockBody := &electra.BeaconBlockBody{
+	genesisBlockBody := &bellatrix.BeaconBlockBody{
 		ETH1Data: &phase0.ETH1Data{
 			BlockHash: make([]byte, 32),
 		},
 		SyncAggregate: &altair.SyncAggregate{
 			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
 		},
-		ExecutionPayload: &deneb.ExecutionPayload{
-			BaseFeePerGas: uint256.NewInt(0),
-		},
-		ExecutionRequests: &electra.ExecutionRequests{},
+		ExecutionPayload: &bellatrix.ExecutionPayload{},
 	}
 
 	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
@@ -149,10 +127,10 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		minGenesisTime = genesisBlock.Time()
 	}
 
-	genesisState := &electra.BeaconState{
+	genesisState := &bellatrix.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionElectra, b.clConfig),
+		Fork:                  GetStateForkConfig(spec.DataVersionBellatrix, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
@@ -179,27 +157,27 @@ func (b *electraBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	}
 
 	versionedState := &spec.VersionedBeaconState{
-		Version: spec.DataVersionElectra,
-		Electra: genesisState,
+		Version:   spec.DataVersionBellatrix,
+		Bellatrix: genesisState,
 	}
 
-	logrus.Infof("genesis version: electra")
+	logrus.Infof("genesis version: bellatrix")
 	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
 	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
 
 	return versionedState, nil
 }
 
-func (b *electraBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
-	if state.Version != spec.DataVersionElectra {
+func (b *bellatrixBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
+	if state.Version != spec.DataVersionBellatrix {
 		return nil, fmt.Errorf("unsupported version: %s", state.Version)
 	}
 
 	switch contentType {
 	case http.ContentTypeSSZ:
-		return b.dynSsz.MarshalSSZ(state.Electra)
+		return b.dynSsz.MarshalSSZ(state.Bellatrix)
 	case http.ContentTypeJSON:
-		return state.Electra.MarshalJSON()
+		return state.Bellatrix.MarshalJSON()
 	default:
 		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}

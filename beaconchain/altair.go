@@ -1,22 +1,23 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
 
 	"github.com/attestantio/go-eth2-client/http"
 	"github.com/attestantio/go-eth2-client/spec"
+	"github.com/attestantio/go-eth2-client/spec/altair"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
+	dynssz "github.com/pk910/dynamic-ssz"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
 	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
-	dynssz "github.com/pk910/dynamic-ssz"
 )
 
-type phase0Builder struct {
+type altairBuilder struct {
 	elGenesis       *core.Genesis
 	clConfig        *config.Config
 	dynSsz          *dynssz.DynSsz
@@ -24,23 +25,23 @@ type phase0Builder struct {
 	validators      []*validators.Validator
 }
 
-func NewPhase0Builder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
-	return &phase0Builder{
+func NewAltairBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
+	return &altairBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
 		dynSsz:    beaconutils.GetDynSSZ(clConfig),
 	}
 }
 
-func (b *phase0Builder) SetShadowForkBlock(block *types.Block) {
+func (b *altairBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *phase0Builder) AddValidators(val []*validators.Validator) {
+func (b *altairBuilder) AddValidators(val []*validators.Validator) {
 	b.validators = append(b.validators, val...)
 }
 
-func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
+func (b *altairBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisBlock := b.shadowForkBlock
 	if genesisBlock == nil {
 		genesisBlock = b.elGenesis.ToBlock()
@@ -58,9 +59,19 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute deposit root: %w", err)
 	}
 
-	genesisBlockBody := &phase0.BeaconBlockBody{
+	syncCommitteeSize := b.clConfig.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
+	syncCommitteeMaskBytes := syncCommitteeSize / 8
+
+	if syncCommitteeSize%8 != 0 {
+		syncCommitteeMaskBytes++
+	}
+
+	genesisBlockBody := &altair.BeaconBlockBody{
 		ETH1Data: &phase0.ETH1Data{
 			BlockHash: make([]byte, 32),
+		},
+		SyncAggregate: &altair.SyncAggregate{
+			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
 		},
 	}
 
@@ -71,6 +82,11 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 
 	clValidators, validatorsRoot := beaconutils.GetGenesisValidators(b.clConfig, b.validators)
 
+	syncCommittee, err := beaconutils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get genesis sync committee: %w", err)
+	}
+
 	genesisDelay := b.clConfig.GetUintDefault("GENESIS_DELAY", 604800)
 	blocksPerHistoricalRoot := b.clConfig.GetUintDefault("SLOTS_PER_HISTORICAL_ROOT", 8192)
 	epochsPerSlashingVector := b.clConfig.GetUintDefault("EPOCHS_PER_SLASHINGS_VECTOR", 8192)
@@ -80,10 +96,10 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 		minGenesisTime = genesisBlock.Time()
 	}
 
-	genesisState := &phase0.BeaconState{
+	genesisState := &altair.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionPhase0, b.clConfig),
+		Fork:                  GetStateForkConfig(spec.DataVersionAltair, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
@@ -101,30 +117,35 @@ func (b *phase0Builder) BuildState() (*spec.VersionedBeaconState, error) {
 		Validators:                  clValidators,
 		Balances:                    beaconutils.GetGenesisBalances(b.clConfig, b.validators),
 		Slashings:                   make([]phase0.Gwei, epochsPerSlashingVector),
+		PreviousEpochParticipation:  make([]altair.ParticipationFlags, len(clValidators)),
+		CurrentEpochParticipation:   make([]altair.ParticipationFlags, len(clValidators)),
+		InactivityScores:            make([]uint64, len(clValidators)),
+		CurrentSyncCommittee:        syncCommittee,
+		NextSyncCommittee:           syncCommittee,
 	}
 
 	versionedState := &spec.VersionedBeaconState{
-		Version: spec.DataVersionPhase0,
-		Phase0:  genesisState,
+		Version: spec.DataVersionAltair,
+		Altair:  genesisState,
 	}
 
-	logrus.Infof("genesis version: phase0")
+	logrus.Infof("genesis version: altair")
 	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
 	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
 
 	return versionedState, nil
 }
 
-func (b *phase0Builder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
-	if state.Version != spec.DataVersionPhase0 {
+func (b *altairBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {
+	if state.Version != spec.DataVersionAltair {
 		return nil, fmt.Errorf("unsupported version: %s", state.Version)
 	}
 
 	switch contentType {
 	case http.ContentTypeSSZ:
-		return b.dynSsz.MarshalSSZ(state.Phase0)
+		return b.dynSsz.MarshalSSZ(state.Altair)
 	case http.ContentTypeJSON:
-		return state.Phase0.MarshalJSON()
+		return state.Altair.MarshalJSON()
 	default:
 		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}

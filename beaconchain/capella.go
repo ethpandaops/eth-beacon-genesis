@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ type capellaBuilder struct {
 	validators      []*validators.Validator
 }
 
-func NewCapellaBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
+func NewCapellaBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
 	return &capellaBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,

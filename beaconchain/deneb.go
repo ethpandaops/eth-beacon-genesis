@@ -1,4 +1,4 @@
-package generator
+package beaconchain
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ type denebBuilder struct {
 	validators      []*validators.Validator
 }
 
-func NewDenebBuilder(elGenesis *core.Genesis, clConfig *config.Config) GenesisBuilder {
+func NewDenebBuilder(elGenesis *core.Genesis, clConfig *config.Config) BeaconGenesisBuilder {
 	return &denebBuilder{
 		elGenesis: elGenesis,
 		clConfig:  clConfig,
