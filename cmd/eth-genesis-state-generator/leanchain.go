@@ -15,7 +15,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func runLeanchain(ctx context.Context, cmd *cli.Command) error {
+func runLeanchain(_ context.Context, cmd *cli.Command) error {
 	eth1Config := cmd.String(eth1ConfigFlag.Name)
 	eth2Config := cmd.String(configFlag.Name)
 	validatorsFile := cmd.String(validatorsFileFlag.Name)

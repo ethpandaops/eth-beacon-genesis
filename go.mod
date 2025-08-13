@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
 	github.com/ethereum/go-ethereum v1.16.2
-	github.com/ethpandaops/go-lean-types v0.0.0-20250813191016-ef475651d67a
+	github.com/ethpandaops/go-lean-types v0.0.0-20250813191101-e2fe02849ec8
 	github.com/ferranbt/fastssz v1.0.0
 	github.com/herumi/bls-eth-go-binary v1.36.4
 	github.com/holiman/uint256 v1.3.2
@@ -85,5 +85,3 @@ require (
 )
 
 replace github.com/attestantio/go-eth2-client => github.com/attestantio/go-eth2-client v0.0.0-20250721122214-dc2928832acc
-
-replace github.com/ethpandaops/go-lean-types => ../go-lean-types

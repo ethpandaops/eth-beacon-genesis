@@ -46,8 +46,8 @@ func LoadValidatorsFromYaml(validatorsConfigPath string) ([]*Validator, error) {
 	}
 
 	validators := make([]*Validator, 0)
-
 	validatorList := []string{}
+
 	err = yaml.Unmarshal(validatorsFile, &validatorList)
 	if err != nil {
 		return nil, err
