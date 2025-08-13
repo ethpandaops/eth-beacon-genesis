@@ -12,8 +12,8 @@ import (
 	"github.com/urfave/cli/v3"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconchain"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/buildinfo"
-	"github.com/ethpandaops/eth-beacon-genesis/config"
 	"github.com/ethpandaops/eth-beacon-genesis/eth1"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
@@ -122,7 +122,7 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 
 	logrus.Infof("loaded execution genesis. chainid: %v", elGenesis.Config.ChainID.String())
 
-	clConfig, err := config.LoadConfig(eth2Config)
+	clConfig, err := beaconconfig.LoadConfig(eth2Config)
 	if err != nil {
 		return fmt.Errorf("failed to load consensus config: %w", err)
 	}
