@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/attestantio/go-eth2-client/http"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethpandaops/eth-beacon-genesis/buildinfo"
 	"github.com/ethpandaops/eth-beacon-genesis/eth1"
 	"github.com/ethpandaops/eth-beacon-genesis/leanchain"
@@ -18,9 +19,12 @@ import (
 func runLeanchain(_ context.Context, cmd *cli.Command) error {
 	eth1Config := cmd.String(eth1ConfigFlag.Name)
 	eth2Config := cmd.String(configFlag.Name)
+	massValidatorsFile := cmd.String(massValidatorsFileFlag.Name)
 	validatorsFile := cmd.String(validatorsFileFlag.Name)
 	stateOutputFile := cmd.String(stateOutputFlag.Name)
 	jsonOutputFile := cmd.String(jsonOutputFlag.Name)
+	nodesOutputFile := cmd.String(nodesOutputFlag.Name)
+	validatorsOutputFile := cmd.String(validatorsOutputFlag.Name)
 	quiet := cmd.Bool(quietFlag.Name)
 
 	if quiet {
@@ -31,12 +35,17 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 		logrus.Infof("eth-beacon-genesis version: %s", buildinfo.GetBuildVersion())
 	}
 
-	elGenesis, err := eth1.LoadEth1GenesisConfig(eth1Config)
-	if err != nil {
-		return fmt.Errorf("failed to load execution genesis: %w", err)
-	}
+	var elGenesis *core.Genesis
 
-	logrus.Infof("loaded execution genesis. chainid: %v", elGenesis.Config.ChainID.String())
+	if eth1Config != "" {
+		var err error
+		elGenesis, err = eth1.LoadEth1GenesisConfig(eth1Config)
+		if err != nil {
+			return fmt.Errorf("failed to load execution genesis: %w", err)
+		}
+
+		logrus.Infof("loaded execution genesis. chainid: %v", elGenesis.Config.ChainID.String())
+	}
 
 	clConfig, err := leanconfig.LoadConfig(eth2Config)
 	if err != nil {
@@ -46,6 +55,17 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 	logrus.Infof("loaded leanchain config.")
 
 	var clValidators []*leanvalidators.Validator
+
+	if massValidatorsFile != "" {
+		vals, err2 := leanvalidators.LoadValidatorsFromMassYaml(massValidatorsFile)
+		if err2 != nil {
+			return fmt.Errorf("failed to load validators from mass yaml file: %w", err2)
+		}
+
+		if len(vals) > 0 {
+			clValidators = vals
+		}
+	}
 
 	if validatorsFile != "" {
 		vals, err2 := leanvalidators.LoadValidatorsFromFile(validatorsFile)
@@ -63,6 +83,21 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 	}
 
 	logrus.Infof("loaded %d validators.", len(clValidators))
+
+	// Generate nodes and validators output if requested
+	if nodesOutputFile != "" || validatorsOutputFile != "" {
+		err = leanvalidators.GenerateNodeAndValidatorLists(clValidators, nodesOutputFile, validatorsOutputFile)
+		if err != nil {
+			return fmt.Errorf("failed to generate nodes and validators lists: %w", err)
+		}
+
+		if nodesOutputFile != "" {
+			logrus.Infof("wrote nodes list to: %s", nodesOutputFile)
+		}
+		if validatorsOutputFile != "" {
+			logrus.Infof("wrote validators list to: %s", validatorsOutputFile)
+		}
+	}
 
 	builder := leanchain.NewGenesisBuilder(elGenesis, clConfig)
 	builder.AddValidators(clValidators)

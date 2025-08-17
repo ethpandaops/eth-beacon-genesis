@@ -12,6 +12,22 @@ import (
 )
 
 var (
+	eth1ConfigFlag         *cli.StringFlag
+	configFlag             *cli.StringFlag
+	mnemonicsFileFlag      *cli.StringFlag
+	validatorsFileFlag     *cli.StringFlag
+	massValidatorsFileFlag *cli.StringFlag
+	shadowForkBlockFlag    *cli.StringFlag
+	shadowForkRPCFlag      *cli.StringFlag
+	stateOutputFlag        *cli.StringFlag
+	jsonOutputFlag         *cli.StringFlag
+	nodesOutputFlag        *cli.StringFlag
+	validatorsOutputFlag   *cli.StringFlag
+	quietFlag              *cli.BoolFlag
+	app                    *cli.Command
+)
+
+func init() {
 	eth1ConfigFlag = &cli.StringFlag{
 		Name:     "eth1-config",
 		Usage:    "Path to execution genesis config (genesis.json)",
@@ -30,6 +46,10 @@ var (
 		Name:  "additional-validators",
 		Usage: "Path to the file with a list of additional genesis validators validators",
 	}
+	massValidatorsFileFlag = &cli.StringFlag{
+		Name:  "mass-validators",
+		Usage: "Path to the YAML file containing mass validators configuration with ENRs and counts",
+	}
 	shadowForkBlockFlag = &cli.StringFlag{
 		Name:  "shadow-fork-block",
 		Usage: "Path to the file with a execution block to create a shadow fork from",
@@ -45,6 +65,14 @@ var (
 	jsonOutputFlag = &cli.StringFlag{
 		Name:  "json-output",
 		Usage: "Path to the file to write the genesis state to in JSON format",
+	}
+	nodesOutputFlag = &cli.StringFlag{
+		Name:  "nodes-output",
+		Usage: "Path to the file to write the list of nodes (ENRs) to in YAML format",
+	}
+	validatorsOutputFlag = &cli.StringFlag{
+		Name:  "validators-output",
+		Usage: "Path to the file to write the validator indices by node to in YAML format",
 	}
 
 	quietFlag = &cli.BoolFlag{
@@ -74,8 +102,8 @@ var (
 				Usage:   "Generate a leanchain genesis state",
 				Aliases: []string{"lc", "lean", "leanchain"},
 				Flags: []cli.Flag{
-					eth1ConfigFlag, configFlag, validatorsFileFlag, stateOutputFlag, jsonOutputFlag,
-					quietFlag,
+					eth1ConfigFlag, configFlag, massValidatorsFileFlag, validatorsFileFlag, stateOutputFlag, jsonOutputFlag,
+					nodesOutputFlag, validatorsOutputFlag, quietFlag,
 				},
 				Action:    runLeanchain,
 				UsageText: "eth-beacon-genesis leanchain [options]",
@@ -92,7 +120,7 @@ var (
 		},
 		DefaultCommand: "help",
 	}
-)
+}
 
 func main() {
 	if err := app.Run(context.Background(), os.Args); err != nil {

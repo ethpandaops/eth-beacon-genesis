@@ -45,10 +45,14 @@ func (b *phase0Builder) BuildState() (any, error) {
 		Config: phase0.Config{
 			NumValidators: uint64(len(b.validators)),
 		},
-		LatestJustified:          phase0.Checkpoint{},
-		LatestFinalized:          phase0.Checkpoint{},
-		HistoricalBlockHashes:    []phase0.Root{},
-		JustifiedSlots:           []bool{},
+		LatestJustified: phase0.Checkpoint{},
+		LatestFinalized: phase0.Checkpoint{},
+		HistoricalBlockHashes: []phase0.Root{
+			{}, // zero hash
+		},
+		JustifiedSlots: []bool{
+			true,
+		},
 		JustificationsRoots:      []phase0.Root{},
 		JustificationsValidators: []byte{},
 	}
