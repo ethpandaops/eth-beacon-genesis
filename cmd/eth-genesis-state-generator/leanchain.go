@@ -16,7 +16,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func runLeanchain(_ context.Context, cmd *cli.Command) error {
+func runLeanchain(_ context.Context, cmd *cli.Command) error { //nolint:gocyclo // ignore
 	eth1Config := cmd.String(eth1ConfigFlag.Name)
 	eth2Config := cmd.String(configFlag.Name)
 	massValidatorsFile := cmd.String(massValidatorsFileFlag.Name)
