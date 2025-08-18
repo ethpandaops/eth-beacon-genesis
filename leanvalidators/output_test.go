@@ -37,6 +37,7 @@ func TestGenerateNodeAndValidatorLists(t *testing.T) {
 	}
 
 	var nodes []string
+
 	err = yaml.Unmarshal(nodesData, &nodes)
 	if err != nil {
 		t.Fatalf("failed to unmarshal nodes.yaml: %v", err)
@@ -62,6 +63,7 @@ func TestGenerateNodeAndValidatorLists(t *testing.T) {
 	}
 
 	var validatorLists [][]int
+
 	err = yaml.Unmarshal(validatorsData, &validatorLists)
 	if err != nil {
 		t.Fatalf("failed to unmarshal validators.yaml: %v", err)
@@ -84,6 +86,7 @@ func TestGenerateNodeAndValidatorLists(t *testing.T) {
 			t.Errorf("list %d: expected length %d, got %d", i, len(expectedLists[i]), len(list))
 			continue
 		}
+
 		for j, idx := range list {
 			if idx != expectedLists[i][j] {
 				t.Errorf("list %d, position %d: expected index %d, got %d", i, j, expectedLists[i][j], idx)
@@ -130,6 +133,7 @@ func TestGenerateNodeAndValidatorLists_RoundRobinOrder(t *testing.T) {
 	}
 
 	var validatorLists [][]int
+
 	err = yaml.Unmarshal(validatorsData, &validatorLists)
 	if err != nil {
 		t.Fatalf("failed to unmarshal validators.yaml: %v", err)
@@ -147,6 +151,7 @@ func TestGenerateNodeAndValidatorLists_RoundRobinOrder(t *testing.T) {
 			t.Errorf("list %d: expected length %d, got %d", i, len(expectedLists[i]), len(list))
 			continue
 		}
+
 		for j, idx := range list {
 			if idx != expectedLists[i][j] {
 				t.Errorf("list %d, position %d: expected index %d, got %d", i, j, expectedLists[i][j], idx)

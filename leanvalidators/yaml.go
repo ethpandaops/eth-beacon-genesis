@@ -10,7 +10,7 @@ import (
 type ShuffleMode string
 
 const (
-	ShuffleModeNone      ShuffleMode = "none"
+	ShuffleModeNone       ShuffleMode = "none"
 	ShuffleModeRoundRobin ShuffleMode = "roundrobin"
 )
 
@@ -49,10 +49,12 @@ func expandValidators(config *MassValidatorsConfig) ([]*Validator, error) {
 
 	// Calculate total validators
 	totalValidators := 0
+
 	for _, entry := range config.Validators {
 		if entry.Count < 0 {
 			return nil, fmt.Errorf("invalid count %d for ENR %s", entry.Count, entry.ENR)
 		}
+
 		totalValidators += entry.Count
 	}
 
@@ -87,6 +89,7 @@ func expandValidators(config *MassValidatorsConfig) ([]*Validator, error) {
 					})
 					counters[idx]++
 					remaining--
+
 					if remaining == 0 {
 						break
 					}

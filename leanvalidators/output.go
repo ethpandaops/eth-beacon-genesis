@@ -21,10 +21,11 @@ func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, val
 			// New ENR, add to nodes list
 			nodeIdx = len(nodes)
 			enrToIndex[validator.ENR] = nodeIdx
-			nodes = append(nodes, validator.ENR)
 			validatorsByNode[nodeIdx] = []int{}
+
+			nodes = append(nodes, validator.ENR)
 		}
-		
+
 		// Add validator index to the node's list
 		validatorsByNode[nodeIdx] = append(validatorsByNode[nodeIdx], validatorIdx)
 	}
@@ -44,7 +45,7 @@ func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, val
 		for nodeIdx := 0; nodeIdx < len(nodes); nodeIdx++ {
 			validatorLists[nodeIdx] = validatorsByNode[nodeIdx]
 		}
-		
+
 		err := writeValidatorsYAML(validatorLists, validatorsOutputPath)
 		if err != nil {
 			return fmt.Errorf("failed to write validators.yaml: %w", err)
@@ -60,7 +61,7 @@ func writeNodesYAML(nodes []string, outputPath string) error {
 		return fmt.Errorf("failed to marshal nodes: %w", err)
 	}
 
-	err = os.WriteFile(outputPath, data, 0o644)
+	err = os.WriteFile(outputPath, data, 0o644) //nolint:gosec // no security concern
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
@@ -74,7 +75,7 @@ func writeValidatorsYAML(validatorLists [][]int, outputPath string) error {
 		return fmt.Errorf("failed to marshal validator lists: %w", err)
 	}
 
-	err = os.WriteFile(outputPath, data, 0o644)
+	err = os.WriteFile(outputPath, data, 0o644) //nolint:gosec // no security concern
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}

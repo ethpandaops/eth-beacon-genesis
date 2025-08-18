@@ -8,11 +8,11 @@ import (
 
 func TestLoadValidatorsFromMassYaml(t *testing.T) {
 	tests := []struct {
-		name            string
-		yamlContent     string
-		expectedCount   int
-		expectedError   bool
-		validateResult  func(t *testing.T, validators []*Validator)
+		name           string
+		yamlContent    string
+		expectedCount  int
+		expectedError  bool
+		validateResult func(t *testing.T, validators []*Validator)
 	}{
 		{
 			name: "linear mode with multiple validators",
@@ -23,7 +23,7 @@ validators:
   - enr: enr2
     count: 3`,
 			expectedCount: 5,
-			validateResult: func(t *testing.T, validators []*Validator) {
+			validateResult: func(t *testing.T, validators []*Validator) { //nolint:thelper // ignore
 				// Should be: enr1, enr1, enr2, enr2, enr2
 				expected := []string{"enr1", "enr1", "enr2", "enr2", "enr2"}
 				for i, v := range validators {
@@ -42,7 +42,7 @@ validators:
   - enr: enr2
     count: 2`,
 			expectedCount: 5,
-			validateResult: func(t *testing.T, validators []*Validator) {
+			validateResult: func(t *testing.T, validators []*Validator) { //nolint:thelper // ignore
 				// Should be: enr1, enr2, enr1, enr2, enr1
 				expected := []string{"enr1", "enr2", "enr1", "enr2", "enr1"}
 				for i, v := range validators {
@@ -58,7 +58,7 @@ validators:
   - enr: enr1
     count: 2`,
 			expectedCount: 2,
-			validateResult: func(t *testing.T, validators []*Validator) {
+			validateResult: func(t *testing.T, validators []*Validator) { //nolint:thelper // ignore
 				for _, v := range validators {
 					if v.ENR != "enr1" {
 						t.Errorf("expected ENR enr1, got %s", v.ENR)
@@ -90,8 +90,8 @@ validators:
 			expectedError: true,
 		},
 		{
-			name: "empty validators list",
-			yamlContent: `validators: []`,
+			name:          "empty validators list",
+			yamlContent:   `validators: []`,
 			expectedError: true,
 		},
 		{
@@ -109,7 +109,8 @@ validators:
 			// Create temporary file
 			tmpDir := t.TempDir()
 			tmpFile := filepath.Join(tmpDir, "validators.yaml")
-			err := os.WriteFile(tmpFile, []byte(tt.yamlContent), 0o644)
+
+			err := os.WriteFile(tmpFile, []byte(tt.yamlContent), 0o644) //nolint:gosec // no security concern
 			if err != nil {
 				t.Fatalf("failed to write test file: %v", err)
 			}
@@ -122,8 +123,10 @@ validators:
 				if err == nil {
 					t.Error("expected error but got none")
 				}
+
 				return
 			}
+
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -140,4 +143,3 @@ validators:
 		})
 	}
 }
-

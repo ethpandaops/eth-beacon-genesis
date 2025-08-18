@@ -39,6 +39,7 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 
 	if eth1Config != "" {
 		var err error
+
 		elGenesis, err = eth1.LoadEth1GenesisConfig(eth1Config)
 		if err != nil {
 			return fmt.Errorf("failed to load execution genesis: %w", err)
@@ -94,6 +95,7 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 		if nodesOutputFile != "" {
 			logrus.Infof("wrote nodes list to: %s", nodesOutputFile)
 		}
+
 		if validatorsOutputFile != "" {
 			logrus.Infof("wrote validators list to: %s", validatorsOutputFile)
 		}
