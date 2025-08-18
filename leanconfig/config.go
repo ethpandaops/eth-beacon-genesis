@@ -18,6 +18,21 @@ type Config struct {
 	preset map[string]interface{}
 }
 
+func DefaultConfig() (*Config, error) {
+	config := &Config{
+		values: make(map[string]interface{}),
+		preset: make(map[string]interface{}),
+	}
+
+	config.values["PRESET_BASE"] = "mainnet"
+
+	if err := config.loadPreset(); err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
 func LoadConfig(path string) (*Config, error) {
 	config := &Config{
 		values: make(map[string]interface{}),
@@ -64,36 +79,44 @@ func LoadConfig(path string) (*Config, error) {
 		}
 	}
 
+	if err := config.loadPreset(); err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (c *Config) loadPreset() error {
 	// load referenced preset
-	presetName, found := config.GetString("PRESET_BASE")
+	presetName, found := c.GetString("PRESET_BASE")
 	if found && presetName != "" {
 		presetData, err := presets.PresetsFS.ReadFile(presetName + ".yaml")
 		if err != nil {
-			return nil, fmt.Errorf("preset '%v' not found: %w", presetName, err)
+			return fmt.Errorf("preset '%v' not found: %w", presetName, err)
 		}
 
 		presetMap := make(map[string]string)
 		if err := yaml.Unmarshal(presetData, &presetMap); err != nil {
-			return nil, fmt.Errorf("failed to parse preset yaml: %w", err)
+			return fmt.Errorf("failed to parse preset yaml: %w", err)
 		}
 
 		for key, value := range presetMap {
 			if strings.HasPrefix(value, "0x") {
 				bytes, err := hex.DecodeString(strings.ReplaceAll(value, "0x", ""))
 				if err != nil {
-					return nil, fmt.Errorf("decoding hex: %w", err)
+					return fmt.Errorf("decoding hex: %w", err)
 				}
 
-				config.preset[key] = bytes
+				c.preset[key] = bytes
 			} else if val, err := strconv.ParseUint(value, 10, 64); err == nil {
-				config.preset[key] = val
+				c.preset[key] = val
 			} else {
-				config.preset[key] = value
+				c.preset[key] = value
 			}
 		}
 	}
 
-	return config, nil
+	return nil
 }
 
 func (c *Config) Get(key string) (interface{}, bool) {

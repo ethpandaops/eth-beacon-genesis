@@ -102,7 +102,17 @@ func init() {
 				Usage:   "Generate a leanchain genesis state",
 				Aliases: []string{"lc", "lean", "leanchain"},
 				Flags: []cli.Flag{
-					eth1ConfigFlag, configFlag, massValidatorsFileFlag, validatorsFileFlag, stateOutputFlag, jsonOutputFlag,
+					&cli.StringFlag{
+						Name:     "eth1-config",
+						Usage:    "Path to execution genesis config (genesis.json)",
+						Required: false,
+					},
+					&cli.StringFlag{
+						Name:     "config",
+						Usage:    "Path to consensus genesis config (config.yaml)",
+						Required: false,
+					},
+					massValidatorsFileFlag, validatorsFileFlag, stateOutputFlag, jsonOutputFlag,
 					nodesOutputFlag, validatorsOutputFlag, quietFlag,
 				},
 				Action:    runLeanchain,

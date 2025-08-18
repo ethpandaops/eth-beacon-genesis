@@ -35,11 +35,11 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 		logrus.Infof("eth-beacon-genesis version: %s", buildinfo.GetBuildVersion())
 	}
 
+	var err error
+
 	var elGenesis *core.Genesis
 
 	if eth1Config != "" {
-		var err error
-
 		elGenesis, err = eth1.LoadEth1GenesisConfig(eth1Config)
 		if err != nil {
 			return fmt.Errorf("failed to load execution genesis: %w", err)
@@ -48,9 +48,18 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error {
 		logrus.Infof("loaded execution genesis. chainid: %v", elGenesis.Config.ChainID.String())
 	}
 
-	clConfig, err := leanconfig.LoadConfig(eth2Config)
-	if err != nil {
-		return fmt.Errorf("failed to load consensus config: %w", err)
+	var clConfig *leanconfig.Config
+
+	if eth2Config != "" {
+		clConfig, err = leanconfig.LoadConfig(eth2Config)
+		if err != nil {
+			return fmt.Errorf("failed to load consensus config: %w", err)
+		}
+	} else {
+		clConfig, err = leanconfig.DefaultConfig()
+		if err != nil {
+			return fmt.Errorf("failed to load default consensus config: %w", err)
+		}
 	}
 
 	logrus.Infof("loaded leanchain config.")
