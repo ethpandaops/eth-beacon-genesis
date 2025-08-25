@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/attestantio/go-eth2-client/spec/phase0"
-	"github.com/ethpandaops/eth-beacon-genesis/validators"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconvalidators"
 )
 
 func TestGetGenesisValidators(t *testing.T) {
@@ -14,7 +14,7 @@ func TestGetGenesisValidators(t *testing.T) {
 		name                string
 		preset              string
 		configValues        map[string]interface{}
-		validators          []*validators.Validator
+		validators          []*beaconvalidators.Validator
 		expectedRoot        string
 		expectedValidators  int
 		expectedActivations int
@@ -29,7 +29,7 @@ func TestGetGenesisValidators(t *testing.T) {
 				"VALIDATOR_REGISTRY_LIMIT": uint64(1099511627776),
 				"ELECTRA_FORK_EPOCH":       uint64(18446744073709551615), // disabled
 			},
-			validators: []*validators.Validator{
+			validators: []*beaconvalidators.Validator{
 				{
 					PublicKey:             phase0.BLSPubKey(makeBytes(48, 1)),
 					WithdrawalCredentials: makeBytes(32, 1),
@@ -55,7 +55,7 @@ func TestGetGenesisValidators(t *testing.T) {
 				"VALIDATOR_REGISTRY_LIMIT":      uint64(1099511627776),
 				"ELECTRA_FORK_EPOCH":            uint64(0),
 			},
-			validators: []*validators.Validator{
+			validators: []*beaconvalidators.Validator{
 				{
 					PublicKey:             phase0.BLSPubKey(makeBytes(48, 1)),
 					WithdrawalCredentials: makeBytes(32, 1),
@@ -79,7 +79,7 @@ func TestGetGenesisValidators(t *testing.T) {
 				"FAR_FUTURE_EPOCH":         uint64(18446744073709551615),
 				"VALIDATOR_REGISTRY_LIMIT": uint64(1099511627776),
 			},
-			validators: []*validators.Validator{
+			validators: []*beaconvalidators.Validator{
 				{
 					PublicKey:             phase0.BLSPubKey(makeBytes(48, 1)),
 					WithdrawalCredentials: makeBytes(16, 1), // Invalid: only 16 bytes
@@ -96,7 +96,7 @@ func TestGetGenesisValidators(t *testing.T) {
 				"FAR_FUTURE_EPOCH":         uint64(18446744073709551615),
 				"VALIDATOR_REGISTRY_LIMIT": uint64(1099511627776),
 			},
-			validators: []*validators.Validator{
+			validators: []*beaconvalidators.Validator{
 				nil,
 			},
 			expectedError: true,
@@ -153,7 +153,7 @@ func TestGetGenesisBalances(t *testing.T) {
 		name          string
 		preset        string
 		configValues  map[string]interface{}
-		validators    []*validators.Validator
+		validators    []*beaconvalidators.Validator
 		expectedGweis []uint64
 		expectedError bool
 	}{
@@ -163,7 +163,7 @@ func TestGetGenesisBalances(t *testing.T) {
 			configValues: map[string]interface{}{
 				"MAX_EFFECTIVE_BALANCE": uint64(32_000_000_000),
 			},
-			validators: []*validators.Validator{
+			validators: []*beaconvalidators.Validator{
 				{
 					PublicKey:             phase0.BLSPubKey(makeBytes(48, 1)),
 					WithdrawalCredentials: makeBytes(32, 1),
@@ -183,7 +183,7 @@ func TestGetGenesisBalances(t *testing.T) {
 			configValues: map[string]interface{}{
 				"MAX_EFFECTIVE_BALANCE": uint64(32_000_000_000),
 			},
-			validators: []*validators.Validator{
+			validators: []*beaconvalidators.Validator{
 				{
 					PublicKey:             phase0.BLSPubKey(makeBytes(48, 1)),
 					WithdrawalCredentials: makeBytes(32, 1),

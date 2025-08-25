@@ -16,7 +16,7 @@ import (
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
-	"github.com/ethpandaops/eth-beacon-genesis/validators"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconvalidators"
 	dynssz "github.com/pk910/dynamic-ssz"
 )
 
@@ -25,7 +25,7 @@ type denebBuilder struct {
 	clConfig        *beaconconfig.Config
 	dynSsz          *dynssz.DynSsz
 	shadowForkBlock *types.Block
-	validators      []*validators.Validator
+	validators      []*beaconvalidators.Validator
 }
 
 func NewDenebBuilder(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder {
@@ -40,7 +40,7 @@ func (b *denebBuilder) SetShadowForkBlock(block *types.Block) {
 	b.shadowForkBlock = block
 }
 
-func (b *denebBuilder) AddValidators(val []*validators.Validator) {
+func (b *denebBuilder) AddValidators(val []*beaconvalidators.Validator) {
 	b.validators = append(b.validators, val...)
 }
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
+	"github.com/ethpandaops/eth-beacon-genesis/coreutils"
 )
 
 // GetGenesisProposers returns the proposer indices for the first 2 epochs
@@ -87,7 +88,7 @@ func computeProposerIndex(clConfig *beaconconfig.Config, validators []*phase0.Va
 		binary.LittleEndian.PutUint64(buf[32:], i/16)
 		hash := sha256.Sum256(buf)
 		offset := (i % 16) * 2
-		randomValue := BytesToUint(hash[offset : offset+2])
+		randomValue := coreutils.BytesToUint(hash[offset : offset+2])
 
 		// Check if this validator is selected as proposer
 		if uint64(effectiveBalance)*maxRandomValue >= maxEffectiveBalance*randomValue {

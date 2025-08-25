@@ -9,14 +9,14 @@ import (
 	hbls "github.com/herumi/bls-eth-go-binary/bls"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
-	"github.com/ethpandaops/eth-beacon-genesis/validators"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconvalidators"
 )
 
 type NewBeaconGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder
 
 type BeaconGenesisBuilder interface {
 	SetShadowForkBlock(block *types.Block)
-	AddValidators(validators []*validators.Validator)
+	AddValidators(validators []*beaconvalidators.Validator)
 	BuildState() (*spec.VersionedBeaconState, error)
 	Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error)
 }

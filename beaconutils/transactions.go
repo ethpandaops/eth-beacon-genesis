@@ -9,6 +9,7 @@ import (
 	ssz "github.com/ferranbt/fastssz"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
+	"github.com/ethpandaops/eth-beacon-genesis/coreutils"
 )
 
 func ComputeTransactionsRoot(transactions types.Transactions, cfg *beaconconfig.Config) (phase0.Root, error) {
@@ -35,7 +36,7 @@ func ComputeTransactionsRoot(transactions types.Transactions, cfg *beaconconfig.
 
 	maxBytesPerTx := cfg.GetUintDefault("MAX_BYTES_PER_TRANSACTION", 1073741824)
 
-	transactionsRoot, err := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+	transactionsRoot, err := coreutils.HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
 		for i, elem := range clTransactions {
 			elemIndx := hh.Index()
 			byteLen := uint64(len(elem))
