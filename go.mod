@@ -84,3 +84,5 @@ require (
 )
 
 replace github.com/attestantio/go-eth2-client => github.com/attestantio/go-eth2-client v0.0.0-20250721122214-dc2928832acc
+
+replace github.com/ethereum/go-ethereum => github.com/gballet/go-ethereum v0.0.0-20250826150435-c83a187fa174
