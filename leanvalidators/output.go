@@ -9,25 +9,28 @@ import (
 
 // GenerateNodeAndValidatorLists creates nodes.yaml and validators.yaml from a list of validators
 func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, validatorsOutputPath string) error {
-	// Track unique ENRs and their indices
-	enrToIndex := make(map[string]int)
+	// Track unique ENRs for nodes.yaml
+	uniqueENRs := make(map[string]bool)
 	nodes := []string{}
-	validatorsByNode := make(map[int][]int)
+	
+	// Track validator indices by validator name for validators.yaml
+	validatorIndicesByName := make(map[string][]int)
 
 	// Process validators
 	for validatorIdx, validator := range validators {
-		nodeIdx, exists := enrToIndex[validator.ENR]
-		if !exists {
-			// New ENR, add to nodes list
-			nodeIdx = len(nodes)
-			enrToIndex[validator.ENR] = nodeIdx
-			validatorsByNode[nodeIdx] = []int{}
-
+		// Add unique ENRs to nodes list
+		if !uniqueENRs[validator.ENR] {
+			uniqueENRs[validator.ENR] = true
 			nodes = append(nodes, validator.ENR)
 		}
 
-		// Add validator index to the node's list
-		validatorsByNode[nodeIdx] = append(validatorsByNode[nodeIdx], validatorIdx)
+		// Group validator indices by name
+		validatorName := validator.Name
+		if validatorName == "" {
+			validatorName = fmt.Sprintf("validator_%d", validatorIdx)
+		}
+		
+		validatorIndicesByName[validatorName] = append(validatorIndicesByName[validatorName], validatorIdx)
 	}
 
 	// Write nodes.yaml if path is provided
@@ -40,13 +43,7 @@ func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, val
 
 	// Write validators.yaml if path is provided
 	if validatorsOutputPath != "" {
-		// Convert map to slice in order
-		validatorLists := make([][]int, len(nodes))
-		for nodeIdx := 0; nodeIdx < len(nodes); nodeIdx++ {
-			validatorLists[nodeIdx] = validatorsByNode[nodeIdx]
-		}
-
-		err := writeValidatorsYAML(validatorLists, validatorsOutputPath)
+		err := writeValidatorsYAML(validatorIndicesByName, validatorsOutputPath)
 		if err != nil {
 			return fmt.Errorf("failed to write validators.yaml: %w", err)
 		}
@@ -69,8 +66,8 @@ func writeNodesYAML(nodes []string, outputPath string) error {
 	return nil
 }
 
-func writeValidatorsYAML(validatorLists [][]int, outputPath string) error {
-	data, err := yaml.Marshal(validatorLists)
+func writeValidatorsYAML(validatorIndicesByName map[string][]int, outputPath string) error {
+	data, err := yaml.Marshal(validatorIndicesByName)
 	if err != nil {
 		return fmt.Errorf("failed to marshal validator lists: %w", err)
 	}

@@ -9,14 +9,14 @@ import (
 )
 
 func TestGenerateNodeAndValidatorLists(t *testing.T) {
-	// Create test validators with different ENRs
+	// Create test validators with different ENRs and names
 	validators := []*Validator{
-		{ENR: "enr1"},
-		{ENR: "enr2"},
-		{ENR: "enr3"},
-		{ENR: "enr1"}, // Duplicate of first ENR
-		{ENR: "enr2"}, // Duplicate of second ENR
-		{ENR: "enr1"}, // Another duplicate of first ENR
+		{Name: "validator1", ENR: "enr1"},
+		{Name: "validator1", ENR: "enr1"},
+		{Name: "validator1", ENR: "enr1"},
+		{Name: "validator2", ENR: "enr2"},
+		{Name: "validator2", ENR: "enr2"},
+		{Name: "validator3", ENR: "enr3"},
 	}
 
 	// Create temporary directory for output files
@@ -62,7 +62,7 @@ func TestGenerateNodeAndValidatorLists(t *testing.T) {
 		t.Fatalf("failed to read validators.yaml: %v", err)
 	}
 
-	var validatorLists [][]int
+	var validatorLists map[string][]int
 
 	err = yaml.Unmarshal(validatorsData, &validatorLists)
 	if err != nil {
@@ -74,31 +74,35 @@ func TestGenerateNodeAndValidatorLists(t *testing.T) {
 		t.Errorf("expected 3 validator lists, got %d", len(validatorLists))
 	}
 
-	// Check validator indices
-	expectedLists := [][]int{
-		{0, 3, 5}, // enr1 appears at indices 0, 3, 5
-		{1, 4},    // enr2 appears at indices 1, 4
-		{2},       // enr3 appears at index 2
+	// Check validator indices by name
+	expectedLists := map[string][]int{
+		"validator1": {0, 1, 2}, // validator1 appears at indices 0, 1, 2
+		"validator2": {3, 4},    // validator2 appears at indices 3, 4
+		"validator3": {5},       // validator3 appears at index 5
 	}
 
-	for i, list := range validatorLists {
-		if len(list) != len(expectedLists[i]) {
-			t.Errorf("list %d: expected length %d, got %d", i, len(expectedLists[i]), len(list))
-			continue
-		}
-
-		for j, idx := range list {
-			if idx != expectedLists[i][j] {
-				t.Errorf("list %d, position %d: expected index %d, got %d", i, j, expectedLists[i][j], idx)
+	for name, list := range validatorLists {
+		if expectedList, exists := expectedLists[name]; exists {
+			if len(list) != len(expectedList) {
+				t.Errorf("validator %s: expected length %d, got %d", name, len(expectedList), len(list))
+				continue
 			}
+
+			for j, idx := range list {
+				if idx != expectedList[j] {
+					t.Errorf("validator %s, position %d: expected index %d, got %d", name, j, expectedList[j], idx)
+				}
+			}
+		} else {
+			t.Errorf("unexpected validator name: %s", name)
 		}
 	}
 }
 
 func TestGenerateNodeAndValidatorLists_EmptyPaths(t *testing.T) {
 	validators := []*Validator{
-		{ENR: "enr1"},
-		{ENR: "enr2"},
+		{Name: "test1", ENR: "enr1"},
+		{Name: "test2", ENR: "enr2"},
 	}
 
 	// Should not error when paths are empty
@@ -111,12 +115,12 @@ func TestGenerateNodeAndValidatorLists_EmptyPaths(t *testing.T) {
 func TestGenerateNodeAndValidatorLists_RoundRobinOrder(t *testing.T) {
 	// Test with validators in round-robin order
 	validators := []*Validator{
-		{ENR: "enr1"}, // 0
-		{ENR: "enr2"}, // 1
-		{ENR: "enr3"}, // 2
-		{ENR: "enr1"}, // 3
-		{ENR: "enr2"}, // 4
-		{ENR: "enr1"}, // 5
+		{Name: "node1_val1", ENR: "enr1"}, // 0
+		{Name: "node2_val1", ENR: "enr2"}, // 1
+		{Name: "node3_val1", ENR: "enr3"}, // 2
+		{Name: "node1_val2", ENR: "enr1"}, // 3
+		{Name: "node2_val2", ENR: "enr2"}, // 4
+		{Name: "node1_val3", ENR: "enr1"}, // 5
 	}
 
 	tmpDir := t.TempDir()
@@ -132,30 +136,37 @@ func TestGenerateNodeAndValidatorLists_RoundRobinOrder(t *testing.T) {
 		t.Fatalf("failed to read validators.yaml: %v", err)
 	}
 
-	var validatorLists [][]int
+	var validatorLists map[string][]int
 
 	err = yaml.Unmarshal(validatorsData, &validatorLists)
 	if err != nil {
 		t.Fatalf("failed to unmarshal validators.yaml: %v", err)
 	}
 
-	// Verify the output matches the expected format from the example
-	expectedLists := [][]int{
-		{0, 3, 5}, // enr1
-		{1, 4},    // enr2
-		{2},       // enr3
+	// Verify the output matches expected validator names and indices
+	expectedLists := map[string][]int{
+		"node1_val1": {0},   // first validator
+		"node2_val1": {1},   // second validator  
+		"node3_val1": {2},   // third validator
+		"node1_val2": {3},   // fourth validator
+		"node2_val2": {4},   // fifth validator
+		"node1_val3": {5},   // sixth validator
 	}
 
-	for i, list := range validatorLists {
-		if len(list) != len(expectedLists[i]) {
-			t.Errorf("list %d: expected length %d, got %d", i, len(expectedLists[i]), len(list))
-			continue
-		}
-
-		for j, idx := range list {
-			if idx != expectedLists[i][j] {
-				t.Errorf("list %d, position %d: expected index %d, got %d", i, j, expectedLists[i][j], idx)
+	for name, list := range validatorLists {
+		if expectedList, exists := expectedLists[name]; exists {
+			if len(list) != len(expectedList) {
+				t.Errorf("validator %s: expected length %d, got %d", name, len(expectedList), len(list))
+				continue
 			}
+
+			for j, idx := range list {
+				if idx != expectedList[j] {
+					t.Errorf("validator %s, position %d: expected index %d, got %d", name, j, expectedList[j], idx)
+				}
+			}
+		} else {
+			t.Errorf("unexpected validator name: %s", name)
 		}
 	}
 }

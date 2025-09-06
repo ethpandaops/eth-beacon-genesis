@@ -44,6 +44,7 @@ func (b *phase0Builder) BuildState() (any, error) {
 	genesisState := &phase0.State{
 		Config: phase0.Config{
 			NumValidators: uint64(len(b.validators)),
+			GenesisTime:   b.clConfig.GetUintDefault("GENESIS_TIME", 0),
 		},
 		LatestJustified: phase0.Checkpoint{},
 		LatestFinalized: phase0.Checkpoint{},

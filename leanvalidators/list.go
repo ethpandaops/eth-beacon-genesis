@@ -2,6 +2,7 @@ package leanvalidators
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 
@@ -29,8 +30,20 @@ func LoadValidatorsFromFile(validatorsConfigPath string) ([]*Validator, error) {
 			continue
 		}
 
+		// Parse line format: "name enr" or just "enr"
+		parts := strings.SplitN(line, " ", 2)
+		var name, enr string
+		if len(parts) == 2 {
+			name = strings.TrimSpace(parts[0])
+			enr = strings.TrimSpace(parts[1])
+		} else {
+			name = ""
+			enr = strings.TrimSpace(parts[0])
+		}
+
 		validatorEntry := &Validator{
-			ENR: line,
+			Name: name,
+			ENR:  enr,
 		}
 
 		validators = append(validators, validatorEntry)
@@ -53,9 +66,10 @@ func LoadValidatorsFromYaml(validatorsConfigPath string) ([]*Validator, error) {
 		return nil, err
 	}
 
-	for _, validator := range validatorList {
+	for i, validator := range validatorList {
 		validators = append(validators, &Validator{
-			ENR: validator,
+			Name: fmt.Sprintf("validator_%d", i),
+			ENR:  validator,
 		})
 	}
 
