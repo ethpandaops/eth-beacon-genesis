@@ -12,7 +12,7 @@ func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, val
 	// Track unique ENRs for nodes.yaml
 	uniqueENRs := make(map[string]bool)
 	nodes := []string{}
-	
+
 	// Track validator indices by validator name for validators.yaml
 	validatorIndicesByName := make(map[string][]int)
 
@@ -29,7 +29,7 @@ func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, val
 		if validatorName == "" {
 			validatorName = fmt.Sprintf("validator_%d", validatorIdx)
 		}
-		
+
 		validatorIndicesByName[validatorName] = append(validatorIndicesByName[validatorName], validatorIdx)
 	}
 

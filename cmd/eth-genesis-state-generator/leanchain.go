@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/attestantio/go-eth2-client/http"
 	"github.com/ethereum/go-ethereum/core"
@@ -25,6 +27,7 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error { //nolint:gocyclo 
 	jsonOutputFile := cmd.String(jsonOutputFlag.Name)
 	nodesOutputFile := cmd.String(nodesOutputFlag.Name)
 	validatorsOutputFile := cmd.String(validatorsOutputFlag.Name)
+	configOutputFile := cmd.String(configOutputFlag.Name)
 	quiet := cmd.Bool(quietFlag.Name)
 
 	if quiet {
@@ -155,6 +158,61 @@ func runLeanchain(_ context.Context, cmd *cli.Command) error { //nolint:gocyclo 
 		}
 
 		fmt.Println(string(jsonData))
+	}
+
+	// Generate updated config file with VALIDATOR_COUNT if requested
+	if configOutputFile != "" && eth2Config != "" {
+		err = updateConfigWithValidatorCount(eth2Config, configOutputFile, len(clValidators))
+		if err != nil {
+			return fmt.Errorf("failed to update config file: %w", err)
+		}
+
+		if !quiet {
+			logrus.Infof("wrote updated config to: %s", configOutputFile)
+		}
+	}
+
+	return nil
+}
+
+// updateConfigWithValidatorCount reads the input config file, updates VALIDATOR_COUNT using regex to preserve formatting, and writes to output
+func updateConfigWithValidatorCount(inputConfigPath, outputConfigPath string, validatorCount int) error {
+	// Read the input config file
+	configContent, err := os.ReadFile(inputConfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to read input config file: %w", err)
+	}
+
+	// Convert to string for regex processing
+	configStr := string(configContent)
+
+	// Define regex pattern to match VALIDATOR_COUNT with various formatting
+	// This matches:
+	// VALIDATOR_COUNT: 123
+	// VALIDATOR_COUNT : 123  (with spaces)
+	// VALIDATOR_COUNT: '123' (with quotes)
+	// VALIDATOR_COUNT: "123" (with double quotes)
+	validatorCountRegex := regexp.MustCompile(`(?m)^(\s*VALIDATOR_COUNT\s*:\s*).*$`)
+
+	newValidatorCountLine := fmt.Sprintf("${1}%d", validatorCount)
+
+	// Check if VALIDATOR_COUNT exists in the config
+	if validatorCountRegex.MatchString(configStr) {
+		// Update existing VALIDATOR_COUNT
+		updatedConfig := validatorCountRegex.ReplaceAllString(configStr, newValidatorCountLine)
+		configStr = updatedConfig
+	} else {
+		// Add VALIDATOR_COUNT at the end of the file
+		if !strings.HasSuffix(configStr, "\n") {
+			configStr += "\n"
+		}
+		configStr += fmt.Sprintf("VALIDATOR_COUNT: %d\n", validatorCount)
+	}
+
+	// Write the updated config to the output file
+	err = os.WriteFile(outputConfigPath, []byte(configStr), 0o644) //nolint:gosec // no strict permissions needed
+	if err != nil {
+		return fmt.Errorf("failed to write updated config file: %w", err)
 	}
 
 	return nil

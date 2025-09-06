@@ -145,12 +145,12 @@ func TestGenerateNodeAndValidatorLists_RoundRobinOrder(t *testing.T) {
 
 	// Verify the output matches expected validator names and indices
 	expectedLists := map[string][]int{
-		"node1_val1": {0},   // first validator
-		"node2_val1": {1},   // second validator  
-		"node3_val1": {2},   // third validator
-		"node1_val2": {3},   // fourth validator
-		"node2_val2": {4},   // fifth validator
-		"node1_val3": {5},   // sixth validator
+		"node1_val1": {0}, // first validator
+		"node2_val1": {1}, // second validator
+		"node3_val1": {2}, // third validator
+		"node1_val2": {3}, // fourth validator
+		"node2_val2": {4}, // fifth validator
+		"node1_val3": {5}, // sixth validator
 	}
 
 	for name, list := range validatorLists {

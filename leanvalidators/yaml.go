@@ -1,14 +1,14 @@
 package leanvalidators
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
-	"encoding/hex"
 	"strconv"
 
-	"github.com/ethpandaops/eth-beacon-genesis/leanutils"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethpandaops/eth-beacon-genesis/leanutils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,26 +20,26 @@ const (
 )
 
 type ENRFields struct {
-	IP   string            `yaml:"ip,omitempty"`
-	IP6  string            `yaml:"ip6,omitempty"`
-	TCP  int               `yaml:"tcp,omitempty"`
-	UDP  int               `yaml:"udp,omitempty"`
-	QUIC int               `yaml:"quic,omitempty"`
-	Seq  uint64            `yaml:"seq,omitempty"`
+	IP     string            `yaml:"ip,omitempty"`
+	IP6    string            `yaml:"ip6,omitempty"`
+	TCP    int               `yaml:"tcp,omitempty"`
+	UDP    int               `yaml:"udp,omitempty"`
+	QUIC   int               `yaml:"quic,omitempty"`
+	Seq    uint64            `yaml:"seq,omitempty"`
 	Custom map[string]string `yaml:",inline"`
 }
 
 type MassValidatorEntry struct {
 	// Validator name prefix for generated validators
 	Name string `yaml:"name,omitempty"`
-	
+
 	// Legacy field - use ENR string directly
 	ENR string `yaml:"enr,omitempty"`
-	
+
 	// New fields - generate ENR from privkey and fields
 	PrivKey   string    `yaml:"privkey,omitempty"`
 	ENRFields ENRFields `yaml:"enrFields,omitempty"`
-	
+
 	Count int `yaml:"count"`
 }
 

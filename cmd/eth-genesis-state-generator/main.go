@@ -23,6 +23,7 @@ var (
 	jsonOutputFlag         *cli.StringFlag
 	nodesOutputFlag        *cli.StringFlag
 	validatorsOutputFlag   *cli.StringFlag
+	configOutputFlag       *cli.StringFlag
 	quietFlag              *cli.BoolFlag
 	app                    *cli.Command
 )
@@ -74,6 +75,10 @@ func init() {
 		Name:  "validators-output",
 		Usage: "Path to the file to write the validator indices by node to in YAML format",
 	}
+	configOutputFlag = &cli.StringFlag{
+		Name:  "config-output",
+		Usage: "Path to write updated consensus config with VALIDATOR_COUNT set",
+	}
 
 	quietFlag = &cli.BoolFlag{
 		Name:    "quiet",
@@ -113,7 +118,7 @@ func init() {
 						Required: false,
 					},
 					massValidatorsFileFlag, validatorsFileFlag, stateOutputFlag, jsonOutputFlag,
-					nodesOutputFlag, validatorsOutputFlag, quietFlag,
+					nodesOutputFlag, validatorsOutputFlag, configOutputFlag, quietFlag,
 				},
 				Action:    runLeanchain,
 				UsageText: "eth-beacon-genesis leanchain [options]",

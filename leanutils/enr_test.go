@@ -89,7 +89,7 @@ func TestENRAsGenerator(t *testing.T) {
 	enrWithCustom.SetEntry("mynewfield", "hello world")
 	enrWithCustom.SetTCP(9000)
 	enrWithCustom.SetSeq(10) // Set specific sequence
-	
+
 	// Re-sign after modification
 	if err := enrWithCustom.Sign(privKey); err != nil {
 		t.Fatalf("Failed to re-sign ENR: %v", err)
@@ -112,7 +112,7 @@ func TestENRAsGenerator(t *testing.T) {
 func TestENRWithKnownPrivateKey(t *testing.T) {
 	// Test with a known private key
 	hexKey := "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"
-	
+
 	privKey, err := crypto.HexToECDSA(hexKey)
 	if err != nil {
 		t.Fatalf("Failed to parse private key: %v", err)
@@ -127,7 +127,7 @@ func TestENRWithKnownPrivateKey(t *testing.T) {
 	enrObj.SetIP(net.ParseIP("10.0.0.1"))
 	enrObj.SetUDP(30303)
 	enrObj.SetSeq(1)
-	
+
 	// Sign
 	if err := enrObj.Sign(privKey); err != nil {
 		t.Fatalf("Failed to sign ENR: %v", err)
