@@ -31,8 +31,9 @@ func LoadValidatorsFromFile(validatorsConfigPath string) ([]*Validator, error) {
 		}
 
 		// Parse line format: "name enr" or just "enr"
-		parts := strings.SplitN(line, " ", 2)
 		var name, enr string
+
+		parts := strings.SplitN(line, " ", 2)
 		if len(parts) == 2 {
 			name = strings.TrimSpace(parts[0])
 			enr = strings.TrimSpace(parts[1])

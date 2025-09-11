@@ -44,8 +44,8 @@ type MassValidatorEntry struct {
 }
 
 type MassValidatorsConfig struct {
-	Shuffle    ShuffleMode          `yaml:"shuffle"`
-	Validators []MassValidatorEntry `yaml:"validators"`
+	Shuffle    ShuffleMode           `yaml:"shuffle"`
+	Validators []*MassValidatorEntry `yaml:"validators"`
 }
 
 func LoadValidatorsFromMassYaml(validatorsConfigPath string) ([]*Validator, error) {
@@ -73,11 +73,13 @@ func expandValidators(config *MassValidatorsConfig) ([]*Validator, error) {
 
 	// Generate ENRs for entries that use privkey+fields
 	processedEntries := make([]processedEntry, len(config.Validators))
+
 	for i, entry := range config.Validators {
 		enrString, err := generateENRFromEntry(entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate ENR for entry %d: %w", i, err)
 		}
+
 		processedEntries[i] = processedEntry{
 			Name:  entry.Name,
 			ENR:   enrString,
@@ -87,10 +89,12 @@ func expandValidators(config *MassValidatorsConfig) ([]*Validator, error) {
 
 	// Calculate total validators
 	totalValidators := 0
+
 	for _, entry := range processedEntries {
 		if entry.Count < 0 {
 			return nil, fmt.Errorf("invalid count %d for ENR %s", entry.Count, entry.ENR)
 		}
+
 		totalValidators += entry.Count
 	}
 
@@ -147,7 +151,7 @@ type processedEntry struct {
 	Count int
 }
 
-func generateENRFromEntry(entry MassValidatorEntry) (string, error) {
+func generateENRFromEntry(entry *MassValidatorEntry) (string, error) {
 	// If ENR is provided directly, use it
 	if entry.ENR != "" {
 		return entry.ENR, nil
@@ -180,6 +184,7 @@ func generateENRFromPrivKeyAndFields(privKeyHex string, fields ENRFields) (strin
 		if ip == nil {
 			return "", fmt.Errorf("invalid IP address: %s", fields.IP)
 		}
+
 		enrObj.SetIP4(ip)
 	}
 
@@ -188,6 +193,7 @@ func generateENRFromPrivKeyAndFields(privKeyHex string, fields ENRFields) (strin
 		if ip6 == nil {
 			return "", fmt.Errorf("invalid IPv6 address: %s", fields.IP6)
 		}
+
 		enrObj.SetIP6(ip6)
 	}
 
@@ -200,7 +206,7 @@ func generateENRFromPrivKeyAndFields(privKeyHex string, fields ENRFields) (strin
 	}
 
 	if fields.QUIC > 0 {
-		enrObj.SetEntry("quic", uint16(fields.QUIC))
+		enrObj.SetQUIC(fields.QUIC)
 	}
 
 	// Set custom fields
@@ -211,11 +217,12 @@ func generateENRFromPrivKeyAndFields(privKeyHex string, fields ENRFields) (strin
 		}
 
 		// Try to parse as hex bytes
-		if len(valueHex) > 0 && valueHex[0:2] == "0x" {
+		if len(valueHex) > 1 && valueHex[0:2] == "0x" {
 			bytes, err := hex.DecodeString(valueHex[2:])
 			if err != nil {
 				return "", fmt.Errorf("invalid hex value for field %s: %w", key, err)
 			}
+
 			enrObj.SetEntry(key, bytes)
 		} else {
 			// Try to parse as number first, then fall back to string

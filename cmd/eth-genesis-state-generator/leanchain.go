@@ -206,6 +206,7 @@ func updateConfigWithValidatorCount(inputConfigPath, outputConfigPath string, va
 		if !strings.HasSuffix(configStr, "\n") {
 			configStr += "\n"
 		}
+
 		configStr += fmt.Sprintf("VALIDATOR_COUNT: %d\n", validatorCount)
 	}
 

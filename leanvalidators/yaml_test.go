@@ -31,11 +31,13 @@ validators:
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
+
 	defer os.Remove(tmpFile.Name())
 
 	if _, err := tmpFile.WriteString(yamlContent); err != nil {
 		t.Fatalf("Failed to write to temp file: %v", err)
 	}
+
 	tmpFile.Close()
 
 	// Test loading validators
@@ -54,14 +56,13 @@ validators:
 		if validator.ENR == "" {
 			t.Errorf("Validator %d has empty ENR", i)
 		}
+
 		if validator.Name == "" {
 			t.Errorf("Validator %d has empty Name", i)
 		}
+
 		t.Logf("Validator %d Name: %s, ENR: %s", i, validator.Name, validator.ENR)
 	}
-
-	// Due to round-robin shuffle, validators should be distributed as:
-	// lighthouse_validator, prysm_validator, prysm_validator
 }
 
 func TestGenerateENRFromPrivKeyAndFields(t *testing.T) {

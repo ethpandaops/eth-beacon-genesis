@@ -21,6 +21,7 @@ func GenerateNodeAndValidatorLists(validators []*Validator, nodesOutputPath, val
 		// Add unique ENRs to nodes list
 		if !uniqueENRs[validator.ENR] {
 			uniqueENRs[validator.ENR] = true
+
 			nodes = append(nodes, validator.ENR)
 		}
 

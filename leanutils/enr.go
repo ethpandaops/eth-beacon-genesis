@@ -36,12 +36,14 @@ func (e *ENR) Decode(raw string) error {
 	}
 
 	var r enr.Record
+
 	err = rlp.DecodeBytes(dec[:n], &r)
 	if err != nil {
 		return err
 	}
 
 	e.Record = &r
+
 	return nil
 }
 
@@ -95,22 +97,47 @@ func (e *ENR) SetIP6(ip net.IP) {
 
 // SetTCP sets the TCP port in the ENR record
 func (e *ENR) SetTCP(port int) {
+	if port > 0xffff || port < 0 {
+		panic("invalid tcp port")
+	}
+
 	e.Record.Set(enr.TCP(port))
 }
 
 // SetUDP sets the UDP port in the ENR record
 func (e *ENR) SetUDP(port int) {
+	if port > 0xffff || port < 0 {
+		panic("invalid udp port")
+	}
+
 	e.Record.Set(enr.UDP(port))
 }
 
 // SetTCP6 sets the IPv6-specific TCP port
 func (e *ENR) SetTCP6(port int) {
+	if port > 0xffff || port < 0 {
+		panic("invalid tcp port")
+	}
+
 	e.Record.Set(enr.TCP6(port))
 }
 
 // SetUDP6 sets the IPv6-specific UDP port
 func (e *ENR) SetUDP6(port int) {
+	if port > 0xffff || port < 0 {
+		panic("invalid udp port")
+	}
+
 	e.Record.Set(enr.UDP6(port))
+}
+
+// SetQUIC sets the QUIC port in the ENR record
+func (e *ENR) SetQUIC(port int) {
+	if port > 0xffff || port < 0 {
+		panic("invalid quic port")
+	}
+
+	e.Record.Set(enr.QUIC(port))
 }
 
 // SetEntry sets a custom key-value pair in the ENR record
@@ -146,6 +173,7 @@ func (e *ENR) Seq() uint64 {
 // NodeAddr returns the node address (IP and UDP port) from the ENR
 func (e *ENR) NodeAddr() (net.IP, int, error) {
 	var ip net.IP
+
 	var udpPort enr.UDP
 
 	// Try IPv4 first
@@ -175,6 +203,7 @@ func (e *ENR) PublicKey() (*ecdsa.PublicKey, error) {
 	if err := e.Record.Load(&pubkey); err != nil {
 		return nil, err
 	}
+
 	return (*ecdsa.PublicKey)(&pubkey), nil
 }
 

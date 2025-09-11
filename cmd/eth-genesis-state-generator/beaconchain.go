@@ -17,6 +17,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+//nolint:gocyclo // this is a complex function
 func runBeaconchain(ctx context.Context, cmd *cli.Command) error {
 	eth1Config := cmd.String(eth1ConfigFlag.Name)
 	eth2Config := cmd.String(configFlag.Name)

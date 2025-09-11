@@ -41,6 +41,7 @@ func TestENRAsGenerator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to encode ENR: %v", err)
 	}
+
 	t.Logf("Generated ENR: %s", encoded)
 
 	// Verify the ENR
@@ -78,6 +79,7 @@ func TestENRAsGenerator(t *testing.T) {
 	if err := enrWithCustom.LoadEntry("eth2", &eth2Data); err != nil {
 		t.Fatalf("Failed to load eth2 entry: %v", err)
 	}
+
 	t.Logf("eth2 data: %x", eth2Data)
 
 	// Check sequence is what we set
@@ -105,6 +107,7 @@ func TestENRAsGenerator(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to encode updated ENR: %v", err)
 	}
+
 	t.Logf("Updated ENR: %s", updatedEncoded)
 	t.Logf("Sequence: %d", enrWithCustom.Seq())
 }
@@ -146,6 +149,7 @@ func TestENRWithKnownPrivateKey(t *testing.T) {
 	// Test adding fields after initial signing with specific sequence
 	enrObj.SetEntry("custom", []byte{0x01, 0x02, 0x03})
 	enrObj.SetSeq(100) // Set specific sequence
+
 	if err := enrObj.Sign(privKey); err != nil {
 		t.Fatalf("Failed to re-sign ENR: %v", err)
 	}
