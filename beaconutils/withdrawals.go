@@ -10,6 +10,7 @@ import (
 	ssz "github.com/ferranbt/fastssz"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
+	"github.com/ethpandaops/eth-beacon-genesis/coreutils"
 )
 
 func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, cfg *beaconconfig.Config) (phase0.Root, error) {
@@ -38,7 +39,7 @@ func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, cfg *beaconconfig.Con
 		}
 	}
 
-	withdrawalsRoot, _ := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+	withdrawalsRoot, _ := coreutils.HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
 		for _, elem := range clWithdrawals {
 			elem.HashTreeRootWith(hh) //nolint:errcheck // no error possible
 		}

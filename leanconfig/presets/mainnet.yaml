@@ -1,0 +1,8 @@
+# Leanchain mainnet preset
+
+# Phase0
+# ---------------------------------------------------------------
+# uint64(2**18)
+HISTORICAL_ROOTS_LIMIT: 262144
+# uint64(2**12)
+VALIDATOR_REGISTRY_LIMIT: 4096

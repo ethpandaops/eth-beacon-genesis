@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
 	github.com/ethereum/go-ethereum v1.16.3
+	github.com/ethpandaops/go-lean-types v0.0.0-20250906221504-7870f83f6dea
 	github.com/ferranbt/fastssz v1.0.0
 	github.com/herumi/bls-eth-go-binary v1.36.4
 	github.com/holiman/uint256 v1.3.2
@@ -66,6 +67,7 @@ require (
 	github.com/rs/zerolog v1.32.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/supranational/blst v0.3.14 // indirect
+	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/wealdtech/go-bytesutil v1.2.1 // indirect

@@ -1,4 +1,4 @@
-package validators
+package beaconvalidators
 
 import (
 	"crypto/sha256"

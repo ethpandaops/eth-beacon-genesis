@@ -5,10 +5,11 @@ import (
 	ssz "github.com/ferranbt/fastssz"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
-	"github.com/ethpandaops/eth-beacon-genesis/validators"
+	"github.com/ethpandaops/eth-beacon-genesis/beaconvalidators"
+	"github.com/ethpandaops/eth-beacon-genesis/coreutils"
 )
 
-func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator) ([]*phase0.Validator, phase0.Root) {
+func GetGenesisValidators(cfg *beaconconfig.Config, vals []*beaconvalidators.Validator) ([]*phase0.Validator, phase0.Root) {
 	// Process activations
 	maxEffectiveBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
 	maxEffectiveBalanceElectra := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE_ELECTRA", 2_048_000_000_000))
@@ -64,7 +65,7 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 	}
 
 	maxValidators := cfg.GetUintDefault("VALIDATOR_REGISTRY_LIMIT", 1099511627776)
-	validatorsRoot, err := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+	validatorsRoot, err := coreutils.HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
 		for _, elem := range clValidators {
 			if err := elem.HashTreeRootWith(hh); err != nil {
 				return err
@@ -83,7 +84,7 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 	return clValidators, validatorsRoot
 }
 
-func GetGenesisBalances(cfg *beaconconfig.Config, vals []*validators.Validator) []phase0.Gwei {
+func GetGenesisBalances(cfg *beaconconfig.Config, vals []*beaconvalidators.Validator) []phase0.Gwei {
 	maxEffectiveBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
 	balances := make([]phase0.Gwei, len(vals))
 
