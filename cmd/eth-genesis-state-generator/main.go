@@ -97,6 +97,7 @@ func main() {
 	}
 }
 
+//nolint:gocyclo // this is a complex function
 func runDevnet(ctx context.Context, cmd *cli.Command) error {
 	eth1Config := cmd.String(eth1ConfigFlag.Name)
 	eth2Config := cmd.String(configFlag.Name)
