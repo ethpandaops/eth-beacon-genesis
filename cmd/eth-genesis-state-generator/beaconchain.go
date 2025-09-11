@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/attestantio/go-eth2-client/http"
+	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconchain"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
@@ -79,8 +80,15 @@ func runBeaconchain(ctx context.Context, cmd *cli.Command) error {
 
 	defaultBalance := clConfig.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000)
 	totalBalance := uint64(0)
+	pubkeyMap := make(map[phase0.BLSPubKey]bool)
 
-	for _, val := range clValidators {
+	for idx, val := range clValidators {
+		if pubkeyMap[val.PublicKey] {
+			return fmt.Errorf("duplicate public key in validator set: %s at index %d", val.PublicKey.String(), idx)
+		}
+
+		pubkeyMap[val.PublicKey] = true
+
 		if val.Balance != nil {
 			totalBalance += *val.Balance
 		} else {
