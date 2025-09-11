@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/attestantio/go-eth2-client/http"
+	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
@@ -166,6 +167,17 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 		} else {
 			totalBalance += defaultBalance
 		}
+	}
+
+	// check for duplicate public keys
+	pubkeyMap := make(map[phase0.BLSPubKey]bool)
+
+	for idx, val := range clValidators {
+		if pubkeyMap[val.PublicKey] {
+			return fmt.Errorf("duplicate public key in validator set: %s at index %d", val.PublicKey.String(), idx)
+		}
+
+		pubkeyMap[val.PublicKey] = true
 	}
 
 	logrus.Infof("loaded %d validators. total balance: %d ETH", len(clValidators), totalBalance/1_000_000_000)
