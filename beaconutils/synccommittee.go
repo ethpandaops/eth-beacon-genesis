@@ -10,6 +10,7 @@ import (
 	blsu "github.com/protolambda/bls12-381-util"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
+	"github.com/ethpandaops/eth-beacon-genesis/coreutils"
 )
 
 func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Validator, randaoMix phase0.Hash32) (*altair.SyncCommittee, error) {
@@ -148,7 +149,7 @@ func computeGenesisSyncCommitteeIndicesElectra(cfg *beaconconfig.Config, active 
 			h = sha256.Sum256(buf[:])
 		}
 
-		randomValue := BytesToUint(h[(i%16)*2 : (i%16)*2+2])
+		randomValue := coreutils.BytesToUint(h[(i%16)*2 : (i%16)*2+2])
 
 		if effectiveBalance*0xffff >= phase0.Gwei(maxEffectiveBalance)*phase0.Gwei(randomValue) {
 			syncCommitteeIndices = append(syncCommitteeIndices, candidateIndex)
@@ -163,7 +164,7 @@ func computeGenesisSyncCommitteeIndicesElectra(cfg *beaconconfig.Config, active 
 func computeGenesisSeed(mix phase0.Hash32, epoch phase0.Epoch, domainType phase0.DomainType) phase0.Root {
 	data := []byte{}
 	data = append(data, domainType[:]...)
-	data = append(data, UintToBytes(uint64(epoch))...)
+	data = append(data, coreutils.UintToBytes(uint64(epoch))...)
 	data = append(data, mix[:]...)
 
 	return sha256.Sum256(data)
