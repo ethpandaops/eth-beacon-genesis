@@ -4,15 +4,15 @@ go 1.24.0
 
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
-	github.com/ethereum/go-ethereum v1.16.4
+	github.com/ethereum/go-ethereum v1.16.5
 	github.com/ferranbt/fastssz v1.0.0
 	github.com/herumi/bls-eth-go-binary v1.37.0
 	github.com/holiman/uint256 v1.3.2
-	github.com/pk910/dynamic-ssz v1.1.0
+	github.com/pk910/dynamic-ssz v1.1.1
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/urfave/cli/v3 v3.4.1
+	github.com/urfave/cli/v3 v3.5.0
 	github.com/wealdtech/go-eth2-util v1.8.2
 	golang.org/x/sync v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -22,7 +22,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OffchainLabs/hashtree v0.2.1-0.20250530191054-577f0b75c7f7 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
-	github.com/VictoriaMetrics/fastcache v1.12.2 // indirect
+	github.com/VictoriaMetrics/fastcache v1.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
 	github.com/casbin/govaluate v1.8.0 // indirect
@@ -43,7 +43,7 @@ require (
 	github.com/goccy/go-yaml v1.9.2 // indirect
 	github.com/gofrs/flock v0.12.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/huandu/go-clone v1.6.0 // indirect
