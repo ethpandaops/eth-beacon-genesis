@@ -16,7 +16,7 @@ func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Vali
 	activeIndices := make([]phase0.ValidatorIndex, 0, len(validators))
 
 	for index, validator := range validators {
-		if validator.ActivationEpoch == 0 {
+		if validator.ActivationEpoch == 0 && validator.ExitEpoch > phase0.Epoch(0) {
 			activeIndices = append(activeIndices, phase0.ValidatorIndex(index)) //nolint:gosec // no overflow
 		}
 	}
