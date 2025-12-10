@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
-	github.com/ethereum/go-ethereum v1.16.5
+	github.com/ethereum/go-ethereum v1.16.7
 	github.com/ferranbt/fastssz v1.0.0
 	github.com/herumi/bls-eth-go-binary v1.37.0
 	github.com/holiman/uint256 v1.3.2
@@ -12,15 +12,16 @@ require (
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/urfave/cli/v3 v3.5.0
+	github.com/urfave/cli/v3 v3.6.0
 	github.com/wealdtech/go-eth2-util v1.8.2
-	golang.org/x/sync v0.17.0
+	golang.org/x/sync v0.18.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OffchainLabs/hashtree v0.2.1-0.20250530191054-577f0b75c7f7 // indirect
+	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -33,7 +34,7 @@ require (
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/emicklei/dot v1.6.4 // indirect
-	github.com/ethereum/c-kzg-4844/v2 v2.1.3 // indirect
+	github.com/ethereum/c-kzg-4844/v2 v2.1.5 // indirect
 	github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/fatih/color v1.18.0 // indirect
