@@ -55,9 +55,18 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 			WithdrawableEpoch:          phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
 		}
 
-		if effectiveBalance >= maxEffectiveBalance {
+		switch val.Status {
+		case validators.ValidatorStatusActive:
+			if effectiveBalance >= maxEffectiveBalance {
+				validator.ActivationEligibilityEpoch = phase0.Epoch(0)
+				validator.ActivationEpoch = phase0.Epoch(0)
+			}
+		case validators.ValidatorStatusSlashed, validators.ValidatorStatusExited:
+			validator.Slashed = val.Status == validators.ValidatorStatusSlashed
 			validator.ActivationEligibilityEpoch = phase0.Epoch(0)
 			validator.ActivationEpoch = phase0.Epoch(0)
+			validator.ExitEpoch = phase0.Epoch(0)
+			validator.WithdrawableEpoch = phase0.Epoch(0)
 		}
 
 		clValidators = append(clValidators, validator)
