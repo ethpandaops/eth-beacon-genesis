@@ -60,6 +60,7 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 				data := &Validator{
 					PublicKey:             phase0.BLSPubKey(signingSK.PublicKey().Marshal()),
 					WithdrawalCredentials: make([]byte, 32),
+					Status:                mnemonicSrc.Status,
 				}
 
 				if mnemonicSrc.WdPrefix != "" && mnemonicSrc.WdPrefix != "0x00" && mnemonicSrc.WdAddress != "" {
@@ -143,13 +144,14 @@ func seedFromMnemonic(mnemonic string) (seed []byte, err error) {
 }
 
 type MnemonicSrc struct {
-	Mnemonic  string `yaml:"mnemonic"`
-	Start     uint64 `yaml:"start"`
-	Count     uint64 `yaml:"count"`
-	Balance   uint64 `yaml:"balance"`
-	WdAddress string `yaml:"wd_address"`
-	WdPrefix  string `yaml:"wd_prefix"`
-	WdKeyPath string `yaml:"wd_key_path"`
+	Mnemonic  string          `yaml:"mnemonic"`
+	Start     uint64          `yaml:"start"`
+	Count     uint64          `yaml:"count"`
+	Balance   uint64          `yaml:"balance"`
+	WdAddress string          `yaml:"wd_address"`
+	WdPrefix  string          `yaml:"wd_prefix"`
+	WdKeyPath string          `yaml:"wd_key_path"`
+	Status    ValidatorStatus `yaml:"status"`
 }
 
 func loadMnemonics(srcPath string) ([]MnemonicSrc, error) {

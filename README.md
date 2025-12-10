@@ -96,6 +96,7 @@ eth-genesis-state-generator beaconchain \
   balance: 32000000000                                     # effective balance
   wd_address: "0x1234567890123456789012345678901234567890" # withdrawal address
   wd_prefix: "0x02"                                        # withdrawal credentials prefix
+  status: 0                                                # validator status: 0=active, 1=slashed, 2=exited
 ```
 
 ## Development
