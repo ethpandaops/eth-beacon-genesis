@@ -19,7 +19,7 @@ func GetGenesisProposers(clConfig *beaconconfig.Config, validators []*phase0.Val
 	activeIndices := []phase0.ValidatorIndex{}
 
 	for i, validator := range validators {
-		if validator.ActivationEpoch == 0 { // Active at genesis
+		if validator.ActivationEpoch == 0 && validator.ExitEpoch > phase0.Epoch(0) { // Active at genesis
 			activeIndices = append(activeIndices, phase0.ValidatorIndex(i)) //nolint:gosec // no overflow
 		}
 	}
