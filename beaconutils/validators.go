@@ -73,6 +73,7 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 	}
 
 	maxValidators := cfg.GetUintDefault("VALIDATOR_REGISTRY_LIMIT", 1099511627776)
+
 	validatorsRoot, err := HashWithFastSSZHasher(func(hh sszutils.HashWalker) error {
 		for _, elem := range clValidators {
 			if err := elem.HashTreeRootWith(hh); err != nil {
@@ -84,7 +85,6 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, phase0.Root{}
 	}
