@@ -7,7 +7,7 @@ import (
 	"github.com/attestantio/go-eth2-client/spec/capella"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core/types"
-	ssz "github.com/ferranbt/fastssz"
+	"github.com/pk910/dynamic-ssz/sszutils"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
@@ -38,7 +38,7 @@ func ComputeWithdrawalsRoot(withdrawals types.Withdrawals, cfg *beaconconfig.Con
 		}
 	}
 
-	withdrawalsRoot, _ := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+	withdrawalsRoot, _ := HashWithFastSSZHasher(func(hh sszutils.HashWalker) error {
 		for _, elem := range clWithdrawals {
 			elem.HashTreeRootWith(hh) //nolint:errcheck // no error possible
 		}

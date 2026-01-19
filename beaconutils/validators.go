@@ -2,7 +2,7 @@ package beaconutils
 
 import (
 	"github.com/attestantio/go-eth2-client/spec/phase0"
-	ssz "github.com/ferranbt/fastssz"
+	"github.com/pk910/dynamic-ssz/sszutils"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
@@ -73,7 +73,8 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 	}
 
 	maxValidators := cfg.GetUintDefault("VALIDATOR_REGISTRY_LIMIT", 1099511627776)
-	validatorsRoot, err := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+
+	validatorsRoot, err := HashWithFastSSZHasher(func(hh sszutils.HashWalker) error {
 		for _, elem := range clValidators {
 			if err := elem.HashTreeRootWith(hh); err != nil {
 				return err
@@ -84,7 +85,6 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, phase0.Root{}
 	}
