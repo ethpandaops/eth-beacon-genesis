@@ -2,7 +2,7 @@ package beaconutils
 
 import (
 	"github.com/attestantio/go-eth2-client/spec/phase0"
-	ssz "github.com/ferranbt/fastssz"
+	"github.com/pk910/dynamic-ssz/sszutils"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
@@ -12,7 +12,7 @@ func ComputeDepositRoot(cfg *beaconconfig.Config) (phase0.Root, error) {
 	// since that is what we put as eth1_data.deposit_root in the CL genesis state.
 	maxDeposits := cfg.GetUintDefault("MAX_DEPOSITS_PER_PAYLOAD", 1<<cfg.GetUintDefault("DEPOSIT_CONTRACT_TREE_DEPTH", 32))
 
-	depositRoot, _ := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+	depositRoot, _ := HashWithFastSSZHasher(func(hh sszutils.HashWalker) error {
 		hh.MerkleizeWithMixin(0, 0, maxDeposits)
 		return nil
 	})

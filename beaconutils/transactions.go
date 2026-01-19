@@ -6,7 +6,7 @@ import (
 	"github.com/attestantio/go-eth2-client/spec/bellatrix"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core/types"
-	ssz "github.com/ferranbt/fastssz"
+	"github.com/pk910/dynamic-ssz/sszutils"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
@@ -35,7 +35,7 @@ func ComputeTransactionsRoot(transactions types.Transactions, cfg *beaconconfig.
 
 	maxBytesPerTx := cfg.GetUintDefault("MAX_BYTES_PER_TRANSACTION", 1073741824)
 
-	transactionsRoot, err := HashWithFastSSZHasher(func(hh *ssz.Hasher) error {
+	transactionsRoot, err := HashWithFastSSZHasher(func(hh sszutils.HashWalker) error {
 		for i, elem := range clTransactions {
 			elemIndx := hh.Index()
 			byteLen := uint64(len(elem))

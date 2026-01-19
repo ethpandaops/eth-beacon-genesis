@@ -1,17 +1,20 @@
 package beaconutils
 
-import ssz "github.com/ferranbt/fastssz"
+import (
+	"github.com/pk910/dynamic-ssz/hasher"
+	"github.com/pk910/dynamic-ssz/sszutils"
+)
 
 // HashWithFastSSZHasher runs a callback with a Hasher from the default fastssz HasherPool
-func HashWithFastSSZHasher(cb func(hh *ssz.Hasher) error) ([32]byte, error) {
-	hh := ssz.DefaultHasherPool.Get()
+func HashWithFastSSZHasher(cb func(hh sszutils.HashWalker) error) ([32]byte, error) {
+	hh := hasher.DefaultHasherPool.Get()
 	if err := cb(hh); err != nil {
-		ssz.DefaultHasherPool.Put(hh)
+		hasher.DefaultHasherPool.Put(hh)
 		return [32]byte{}, err
 	}
 
 	root, err := hh.HashRoot()
-	ssz.DefaultHasherPool.Put(hh)
+	hasher.DefaultHasherPool.Put(hh)
 
 	return root, err
 }

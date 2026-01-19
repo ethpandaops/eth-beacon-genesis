@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
 	github.com/ethereum/go-ethereum v1.16.7
-	github.com/ferranbt/fastssz v1.0.0
 	github.com/herumi/bls-eth-go-binary v1.37.0
 	github.com/holiman/uint256 v1.3.2
 	github.com/pk910/dynamic-ssz v1.1.1
@@ -38,6 +37,7 @@ require (
 	github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/fatih/color v1.18.0 // indirect
+	github.com/ferranbt/fastssz v1.0.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
