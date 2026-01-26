@@ -7,7 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.16.8
 	github.com/herumi/bls-eth-go-binary v1.37.0
 	github.com/holiman/uint256 v1.3.2
-	github.com/pk910/dynamic-ssz v1.2.0
+	github.com/pk910/dynamic-ssz v1.2.1
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/tyler-smith/go-bip39 v1.1.0
