@@ -11,7 +11,7 @@ require (
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/urfave/cli/v3 v3.6.2
+	github.com/urfave/cli/v3 v3.7.0
 	github.com/wealdtech/go-eth2-util v1.8.2
 	golang.org/x/sync v0.19.0
 	gopkg.in/yaml.v3 v3.0.1
