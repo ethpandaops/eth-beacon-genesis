@@ -35,9 +35,10 @@ func TestLoadValidatorsFromFile_Valid(t *testing.T) {
 # balance is optional and defaults to 32000000000:
 0xa33dfc09b4031e8c520469024c0ef419cc148f71d7b9501f58f2e54fc644462f208119791e57c5c9b33bf5e47f705060:00b84654c946dc68b353384426a29a3c5d736d9f751c192d5038206e93f79d73
 
-# individual 0x01 or 0x02 credentials can be set:
+# individual 0x01, 0x02 or 0x03 credentials can be set:
 82fc9f31d6e768c57d09483e788b24444235f64d2cae5f2f8a9dd28b6e8ed6636a5f378febc762cfcd9f8ab808286608:010000000000000000000000CcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC
 0xb744b5466a214762ee17621dc4c75d1bba16417e20755f7c9c2485ea518580be50d2c87d70cc4ac393158eb34311c9a2:020000000000000000000000000000000000000000000000000000000000dEaD:64000000000
+0xb0af7d0539aefa170cde65a6b4e5bd64df13a1bba6e91b2a5ee07b8e7c756c3c4d62e94a9d9d5e738f0d845af2e1e000:0300000000000000000000001234567890abcdef1234567890abcdef12345678
 `)
 
 	validators, err := LoadValidatorsFromFile(validatorsFile)
@@ -45,8 +46,8 @@ func TestLoadValidatorsFromFile_Valid(t *testing.T) {
 		t.Fatalf("failed to load validators: %v", err)
 	}
 
-	if len(validators) != 5 {
-		t.Fatalf("expected 5 validators, got %d", len(validators))
+	if len(validators) != 6 {
+		t.Fatalf("expected 6 validators, got %d", len(validators))
 	}
 
 	// Validator 0
@@ -112,6 +113,19 @@ func TestLoadValidatorsFromFile_Valid(t *testing.T) {
 
 	if validators[4].Balance == nil || *validators[4].Balance != 64000000000 {
 		t.Fatalf("expected validator 4 to have balance 64000000000, got %d", validators[4].Balance)
+	}
+
+	// Validator 5
+	if value, _ := hex.DecodeString("b0af7d0539aefa170cde65a6b4e5bd64df13a1bba6e91b2a5ee07b8e7c756c3c4d62e94a9d9d5e738f0d845af2e1e000"); !bytes.Equal(validators[5].PublicKey[:], value) {
+		t.Fatalf("expected validator 5 to have pubkey 0xb0af7d0539aefa170cde65a6b4e5bd64df13a1bba6e91b2a5ee07b8e7c756c3c4d62e94a9d9d5e738f0d845af2e1e000, got %s", validators[5].PublicKey.String())
+	}
+
+	if value, _ := hex.DecodeString("0300000000000000000000001234567890abcdef1234567890abcdef12345678"); !bytes.Equal(validators[5].WithdrawalCredentials, value) {
+		t.Fatalf("expected validator 5 to have withdrawal credentials 0x0300000000000000000000001234567890abcdef1234567890abcdef12345678, got %s", validators[5].WithdrawalCredentials)
+	}
+
+	if validators[5].Balance != nil {
+		t.Fatalf("expected validator 5 to have no balance, got %d", validators[5].Balance)
 	}
 }
 
@@ -236,8 +250,8 @@ func TestLoadValidatorsFromFile_InvalidAddress(t *testing.T) {
 		t.Fatalf("expected error, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "invalid 0x01/0x02 cred") {
-		t.Fatalf("expected error to contain 'invalid 0x01/0x02 cred', got %s", err)
+	if !strings.Contains(err.Error(), "invalid 0x01/0x02/0x03 cred") {
+		t.Fatalf("expected error to contain 'invalid 0x01/0x02/0x03 cred', got %s", err)
 	}
 }
 
