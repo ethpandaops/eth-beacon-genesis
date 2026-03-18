@@ -39,7 +39,8 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 			if effectiveBalance > maxEffectiveBalanceElectra {
 				effectiveBalance = maxEffectiveBalanceElectra
 			}
-		} else {
+		} else if !isElectraActive || val.WithdrawalCredentials[0] != 0x03 {
+			// 0x03 validators have no max effective balance cap; all others are capped at maxEffectiveBalance
 			if effectiveBalance > maxEffectiveBalance {
 				effectiveBalance = maxEffectiveBalance
 			}
