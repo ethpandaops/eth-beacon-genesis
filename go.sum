@@ -170,8 +170,8 @@ github.com/pion/transport/v3 v3.0.1 h1:gDTlPJwROfSfz6QfSi0ZmeCSkFcnWWiiR9ES0ouAN
 github.com/pion/transport/v3 v3.0.1/go.mod h1:UY7kiITrlMv7/IKgd5eTUcaahZx5oUN3l9SzK5f5xE0=
 github.com/pk910/dynamic-ssz v1.3.0 h1:b6v5v3HWAmdxSVKWk4GS7Y/lhURZPAHRQ7EEMUparQk=
 github.com/pk910/dynamic-ssz v1.3.0/go.mod h1:NmeFF4jxzVwWC8cnEhUB7xMI++8hd/0OZvZHFrUvFfs=
-github.com/pk910/go-eth2-client v0.0.0-20260401015957-ef18237e8285 h1:/5RrkhVgULurPw7iIVyRqQKJHYCOccT0cLn4KFo6bUM=
-github.com/pk910/go-eth2-client v0.0.0-20260401015957-ef18237e8285/go.mod h1:cmccJOSI3vYd1LKyU7jo8tR71vGaLmcWzK4xfefei0I=
+github.com/pk910/go-eth2-client v0.0.0-20260401105128-4544cf21b737 h1:+tHLCpEGiohePzGMb1QhDjNLLPH43/dEeslfS4ajpRc=
+github.com/pk910/go-eth2-client v0.0.0-20260401105128-4544cf21b737/go.mod h1:cmccJOSI3vYd1LKyU7jo8tR71vGaLmcWzK4xfefei0I=
 github.com/pk910/hashtree-bindings v0.1.0 h1:w7NyRWFi2OaYEFvo9ADcE/QU6PMuVLl3hBgx92KiH9c=
 github.com/pk910/hashtree-bindings v0.1.0/go.mod h1:zrWt88783JmhBfcgni6kkIMYRdXTZi/FL//OyI5T/l4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
