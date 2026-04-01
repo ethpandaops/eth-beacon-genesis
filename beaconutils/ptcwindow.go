@@ -25,7 +25,7 @@ func GetGenesisPTCWindow(clConfig *beaconconfig.Config, validators []*phase0.Val
 
 	for i, validator := range validators {
 		if validator.ActivationEpoch == 0 && validator.ExitEpoch > phase0.Epoch(0) {
-			activeIndices = append(activeIndices, phase0.ValidatorIndex(i)) //nolint:G115 // index within validator slice bounds
+			activeIndices = append(activeIndices, phase0.ValidatorIndex(i)) //nolint:gosec,nolintlint // index within validator slice bounds
 		}
 	}
 
@@ -67,7 +67,7 @@ func GetGenesisPTCWindow(clConfig *beaconconfig.Config, validators []*phase0.Val
 			// Get concatenated committee indices for this slot
 			slotCandidates := getSlotCommitteeIndices(
 				activeIndices, attesterSeed, s, slotsPerEpoch, committeesPerSlot,
-				uint8(shuffleRoundCount), //nolint:G115 // capped at 255 above
+				uint8(shuffleRoundCount), //nolint:gosec,nolintlint // capped at 255 above
 			)
 
 			// Compute slot-specific PTC seed: hash(ptcEpochSeed || uint_to_bytes(slot))
