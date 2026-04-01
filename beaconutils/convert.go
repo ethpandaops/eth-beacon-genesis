@@ -22,6 +22,19 @@ func UintToBytes(data any) []byte {
 	return res
 }
 
+// MakeAllOnesBitvector returns a byte slice of the right size for a bitvector
+// of the given number of bits, with all bits set to 1.
+func MakeAllOnesBitvector(bits uint64) []byte {
+	byteLen := (bits + 7) / 8
+	bv := make([]byte, byteLen)
+
+	for i := range bv {
+		bv[i] = 0xFF
+	}
+
+	return bv
+}
+
 func BytesToUint(data []byte) uint64 {
 	switch len(data) {
 	case 1:

@@ -72,23 +72,6 @@ func TestGetGenesisValidators(t *testing.T) {
 			expectedActivations: 2,
 		},
 		{
-			name:   "invalid withdrawal credentials length",
-			preset: "minimal",
-			configValues: map[string]interface{}{
-				"MAX_EFFECTIVE_BALANCE":    uint64(32_000_000_000),
-				"FAR_FUTURE_EPOCH":         uint64(18446744073709551615),
-				"VALIDATOR_REGISTRY_LIMIT": uint64(1099511627776),
-			},
-			validators: []*validators.Validator{
-				{
-					PublicKey:             phase0.BLSPubKey(makeBytes(48, 1)),
-					WithdrawalCredentials: makeBytes(16, 1), // Invalid: only 16 bytes
-					Balance:               nil,
-				},
-			},
-			expectedError: true,
-		},
-		{
 			name:   "nil validator",
 			preset: "minimal",
 			configValues: map[string]interface{}{

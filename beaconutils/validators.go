@@ -1,12 +1,29 @@
 package beaconutils
 
 import (
+	"github.com/attestantio/go-eth2-client/spec/bellatrix"
+	"github.com/attestantio/go-eth2-client/spec/gloas"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/pk910/dynamic-ssz/sszutils"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
+
+func SeparateBuildersFromValidators(vals []*validators.Validator) (builders, validatorList []*validators.Validator) {
+	builders = make([]*validators.Validator, 0, len(vals))
+	validatorList = make([]*validators.Validator, 0, len(vals))
+
+	for _, val := range vals {
+		if val.WithdrawalCredentials[0] == 0x03 {
+			builders = append(builders, val)
+		} else {
+			validatorList = append(validatorList, val)
+		}
+	}
+
+	return builders, validatorList
+}
 
 func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator) ([]*phase0.Validator, phase0.Root) {
 	// Process activations
@@ -106,4 +123,36 @@ func GetGenesisBalances(cfg *beaconconfig.Config, vals []*validators.Validator) 
 	}
 
 	return balances
+}
+
+func GetGenesisBuilders(cfg *beaconconfig.Config, vals []*validators.Validator) []*gloas.Builder {
+	builders := make([]*gloas.Builder, 0, len(vals))
+	defaultBalance := phase0.Gwei(cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32_000_000_000))
+
+	for _, val := range vals {
+		var executionAddress bellatrix.ExecutionAddress
+		copy(executionAddress[:], val.WithdrawalCredentials[12:32])
+
+		builder := &gloas.Builder{
+			PublicKey:         val.PublicKey,
+			Version:           val.WithdrawalCredentials[0],
+			ExecutionAddress:  executionAddress,
+			DepositEpoch:      0,
+			WithdrawableEpoch: phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
+		}
+
+		if val.Balance != nil {
+			builder.Balance = phase0.Gwei(*val.Balance)
+		} else {
+			builder.Balance = defaultBalance
+		}
+
+		if val.Status == validators.ValidatorStatusExited {
+			builder.WithdrawableEpoch = phase0.Epoch(0)
+		}
+
+		builders = append(builders, builder)
+	}
+
+	return builders
 }
