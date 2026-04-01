@@ -133,7 +133,7 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisState := &gloas.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionFulu, b.clConfig),
+		Fork:                  GetStateForkConfig(spec.DataVersionGloas, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
