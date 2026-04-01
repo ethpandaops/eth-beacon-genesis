@@ -318,7 +318,7 @@ func TestGetSlotCommitteeIndices(t *testing.T) {
 	// Each slot should get 32/8 = 4 validators
 	activeIndices := make([]phase0.ValidatorIndex, 32)
 	for i := range activeIndices {
-		activeIndices[i] = phase0.ValidatorIndex(i)
+		activeIndices[i] = phase0.ValidatorIndex(i) //nolint:G115 // test index
 	}
 
 	seed := phase0.Root{0xab, 0xcd}
@@ -363,7 +363,7 @@ func TestComputeBalanceWeightedSelection(t *testing.T) {
 
 	candidates := make([]phase0.ValidatorIndex, 10)
 	for i := range candidates {
-		candidates[i] = phase0.ValidatorIndex(i)
+		candidates[i] = phase0.ValidatorIndex(i) //nolint:G115 // test index
 	}
 
 	seed := [32]byte{0x01, 0x02, 0x03}

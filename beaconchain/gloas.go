@@ -86,9 +86,9 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		return nil, fmt.Errorf("failed to compute genesis block body root: %w", err)
 	}
 
-	builders, validators := beaconutils.SeparateBuildersFromValidators(b.validators)
-	clValidators, validatorsRoot := beaconutils.GetGenesisValidators(b.clConfig, validators)
-	clBuilders := beaconutils.GetGenesisBuilders(b.clConfig, builders)
+	genesisBuilders, genesisVals := beaconutils.SeparateBuildersFromValidators(b.validators)
+	clValidators, validatorsRoot := beaconutils.GetGenesisValidators(b.clConfig, genesisVals)
+	clBuilders := beaconutils.GetGenesisBuilders(b.clConfig, genesisBuilders)
 
 	syncCommittee, err := beaconutils.GetGenesisSyncCommittee(b.clConfig, clValidators, phase0.Hash32(genesisBlockHash))
 	if err != nil {
@@ -106,6 +106,7 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	}
 
 	slotsPerEpoch := b.clConfig.GetUintDefault("SLOTS_PER_EPOCH", 32)
+
 	emptyBuilderPendingPayments := make([]*gloas.BuilderPendingPayment, slotsPerEpoch*2)
 	for i := range slotsPerEpoch * 2 {
 		emptyBuilderPendingPayments[i] = &gloas.BuilderPendingPayment{
@@ -146,7 +147,7 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		FinalizedCheckpoint:         &phase0.Checkpoint{},
 		RANDAOMixes:                 beaconutils.SeedRandomMixes(phase0.Hash32(genesisBlockHash), b.clConfig),
 		Validators:                  clValidators,
-		Balances:                    beaconutils.GetGenesisBalances(b.clConfig, validators),
+		Balances:                    beaconutils.GetGenesisBalances(b.clConfig, genesisVals),
 		Slashings:                   make([]phase0.Gwei, epochsPerSlashingVector),
 		PreviousEpochParticipation:  make([]altair.ParticipationFlags, len(clValidators)),
 		CurrentEpochParticipation:   make([]altair.ParticipationFlags, len(clValidators)),
