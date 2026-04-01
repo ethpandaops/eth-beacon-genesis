@@ -2,18 +2,16 @@ package beaconchain
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/attestantio/go-eth2-client/http"
 	"github.com/attestantio/go-eth2-client/spec"
 	"github.com/attestantio/go-eth2-client/spec/altair"
 	"github.com/attestantio/go-eth2-client/spec/bellatrix"
-	"github.com/attestantio/go-eth2-client/spec/deneb"
-	"github.com/attestantio/go-eth2-client/spec/electra"
 	"github.com/attestantio/go-eth2-client/spec/gloas"
 	"github.com/attestantio/go-eth2-client/spec/phase0"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/holiman/uint256"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
@@ -71,17 +69,23 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		syncCommitteeMaskBytes++
 	}
 
-	genesisBlockBody := &electra.BeaconBlockBody{
+	genesisBlockBody := &gloas.BeaconBlockBody{
 		ETH1Data: &phase0.ETH1Data{
 			BlockHash: make([]byte, 32),
 		},
 		SyncAggregate: &altair.SyncAggregate{
 			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
 		},
-		ExecutionPayload: &deneb.ExecutionPayload{
-			BaseFeePerGas: uint256.NewInt(0),
+		SignedExecutionPayloadBid: &gloas.SignedExecutionPayloadBid{
+			Message: &gloas.ExecutionPayloadBid{
+				BlockHash:       phase0.Hash32(genesisBlockHash),
+				ParentBlockHash: phase0.Hash32(genesisBlock.ParentHash()),
+				BuilderIndex:    math.MaxUint64,
+				Value:           phase0.Gwei(0),
+				GasLimit:        genesisBlock.GasLimit(),
+			},
+			Signature: phase0.BLSSignature(make([]byte, 96)),
 		},
-		ExecutionRequests: &electra.ExecutionRequests{},
 	}
 
 	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
