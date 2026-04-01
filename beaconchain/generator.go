@@ -71,6 +71,12 @@ var ForkConfigs = []ForkConfig{
 		VersionField: "FULU_FORK_VERSION",
 		BuilderFn:    NewFuluBuilder,
 	},
+	{
+		Version:      spec.DataVersionGloas,
+		EpochField:   "GLOAS_FORK_EPOCH",
+		VersionField: "GLOAS_FORK_VERSION",
+		BuilderFn:    NewGloasBuilder,
+	},
 }
 
 func init() {
