@@ -2,7 +2,6 @@ package beaconchain
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/attestantio/go-eth2-client/http"
 	"github.com/attestantio/go-eth2-client/spec"
@@ -77,13 +76,7 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 			SyncCommitteeBits: make([]byte, syncCommitteeMaskBytes),
 		},
 		SignedExecutionPayloadBid: &gloas.SignedExecutionPayloadBid{
-			Message: &gloas.ExecutionPayloadBid{
-				BlockHash:       phase0.Hash32(genesisBlockHash),
-				ParentBlockHash: phase0.Hash32(genesisBlock.ParentHash()),
-				BuilderIndex:    math.MaxUint64,
-				Value:           phase0.Gwei(0),
-				GasLimit:        genesisBlock.GasLimit(),
-			},
+			Message:   &gloas.ExecutionPayloadBid{},
 			Signature: phase0.BLSSignature(make([]byte, 96)),
 		},
 	}
