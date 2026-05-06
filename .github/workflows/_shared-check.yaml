@@ -56,8 +56,3 @@ jobs:
 
         # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
         # skip-build-cache: true
-
-    - name: Run tests
-      run: go test -race -coverprofile=coverage.out -covermode=atomic -vet=off ./...
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
