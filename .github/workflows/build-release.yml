@@ -67,10 +67,6 @@ jobs:
       run: |
         cd eth-beacon-genesis_linux_arm64
         tar -czf ../eth-beacon-genesis_${{ inputs.version }}_linux_arm64.tar.gz .
-    - name: "Generate release package: eth-beacon-genesis_${{ inputs.version }}_darwin_amd64.tar.gz"
-      run: |
-        cd eth-beacon-genesis_darwin_amd64
-        tar -czf ../eth-beacon-genesis_${{ inputs.version }}_darwin_amd64.tar.gz .
     - name: "Generate release package: eth-beacon-genesis_${{ inputs.version }}_darwin_arm64.tar.gz"
       run: |
         cd eth-beacon-genesis_darwin_arm64
@@ -94,11 +90,9 @@ jobs:
           | [eth-beacon-genesis_${{ inputs.version }}_windows_amd64.zip](https://github.com/ethpandaops/eth-beacon-genesis/releases/download/v${{ inputs.version }}/eth-beacon-genesis_${{ inputs.version }}_windows_amd64.zip) | eth-beacon-genesis executables for windows/amd64 |
           | [eth-beacon-genesis_${{ inputs.version }}_linux_amd64.tar.gz](https://github.com/ethpandaops/eth-beacon-genesis/releases/download/v${{ inputs.version }}/eth-beacon-genesis_${{ inputs.version }}_linux_amd64.tar.gz) | eth-beacon-genesis executables for linux/amd64 |
           | [eth-beacon-genesis_${{ inputs.version }}_linux_arm64.tar.gz](https://github.com/ethpandaops/eth-beacon-genesis/releases/download/v${{ inputs.version }}/eth-beacon-genesis_${{ inputs.version }}_linux_arm64.tar.gz) | eth-beacon-genesis executables for linux/arm64 |
-          | [eth-beacon-genesis_${{ inputs.version }}_darwin_amd64.tar.gz](https://github.com/ethpandaops/eth-beacon-genesis/releases/download/v${{ inputs.version }}/eth-beacon-genesis_${{ inputs.version }}_darwin_amd64.tar.gz) | eth-beacon-genesis executable for macos/amd64 |
           | [eth-beacon-genesis_${{ inputs.version }}_darwin_arm64.tar.gz](https://github.com/ethpandaops/eth-beacon-genesis/releases/download/v${{ inputs.version }}/eth-beacon-genesis_${{ inputs.version }}_darwin_arm64.tar.gz) | eth-beacon-genesis executable for macos/arm64 |
         files: |
           eth-beacon-genesis_${{ inputs.version }}_windows_amd64.zip
           eth-beacon-genesis_${{ inputs.version }}_linux_amd64.tar.gz
           eth-beacon-genesis_${{ inputs.version }}_linux_arm64.tar.gz
-          eth-beacon-genesis_${{ inputs.version }}_darwin_amd64.tar.gz
           eth-beacon-genesis_${{ inputs.version }}_darwin_arm64.tar.gz
