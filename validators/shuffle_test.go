@@ -11,17 +11,22 @@ import (
 // sequential key indices, so tests can track where each ends up after shuffling.
 func makeValidators(source string, count int) []*Validator {
 	vals := make([]*Validator, count)
+
+	var keyIndex uint64
+
 	for i := range vals {
 		var pubkey phase0.BLSPubKey
 		// Encode the key index into the pubkey so order can be asserted.
-		pubkey[0] = byte(i)
-		pubkey[1] = byte(i >> 8)
+		pubkey[0] = byte(keyIndex)
+		pubkey[1] = byte(keyIndex >> 8)
 
 		vals[i] = &Validator{
 			PublicKey:      pubkey,
 			Source:         source,
-			SourceKeyIndex: uint64(i),
+			SourceKeyIndex: keyIndex,
 		}
+
+		keyIndex++
 	}
 
 	return vals
@@ -119,16 +124,20 @@ func TestShuffleValidators_PreservesSetAndChangesOrder(t *testing.T) {
 	seen := make(map[uint64]bool, count)
 	ordered := true
 
-	for i, v := range vals {
+	var idx uint64
+
+	for _, v := range vals {
 		if seen[v.SourceKeyIndex] {
 			t.Fatalf("duplicate key index %d after shuffle", v.SourceKeyIndex)
 		}
 
 		seen[v.SourceKeyIndex] = true
 
-		if uint64(i) != v.SourceKeyIndex {
+		if v.SourceKeyIndex != idx {
 			ordered = false
 		}
+
+		idx++
 	}
 
 	if len(seen) != count {
@@ -161,9 +170,13 @@ func TestShuffleValidators_SmallSetNoOp(t *testing.T) {
 	vals := makeValidators("mnemonic-0", minBlockSize)
 	ShuffleValidators(vals, 42)
 
-	for i, v := range vals {
-		if uint64(i) != v.SourceKeyIndex {
-			t.Fatalf("small set should not be shuffled, but index %d moved", i)
+	var idx uint64
+
+	for _, v := range vals {
+		if v.SourceKeyIndex != idx {
+			t.Fatalf("small set should not be shuffled, but index %d moved", idx)
 		}
+
+		idx++
 	}
 }

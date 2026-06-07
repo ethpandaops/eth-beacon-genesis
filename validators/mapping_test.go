@@ -45,11 +45,11 @@ func TestBuildMapping_RangesCoverAllAndStayContiguous(t *testing.T) {
 		t.Fatalf("expected the shuffle to produce multiple entries, got %d", len(entries))
 	}
 
-	covered := 0
+	var covered uint64
 
 	for i, e := range entries {
 		// State indices must be contiguous and cover the whole set.
-		if e.StateIndexFrom != uint64(covered) {
+		if e.StateIndexFrom != covered {
 			t.Fatalf("entry %d state range starts at %d, expected %d", i, e.StateIndexFrom, covered)
 		}
 
@@ -68,7 +68,7 @@ func TestBuildMapping_RangesCoverAllAndStayContiguous(t *testing.T) {
 				i, e.KeyIndexFrom, e.StateIndexFrom, vals[e.StateIndexFrom].SourceKeyIndex)
 		}
 
-		covered = int(e.StateIndexTo) + 1 //nolint:gosec // test indices are small
+		covered = e.StateIndexTo + 1
 	}
 
 	if covered != count {
