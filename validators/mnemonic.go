@@ -47,6 +47,13 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 			return nil, fmt.Errorf("mnemonic %d is bad", m)
 		}
 
+		// Use the explicit name for the validator mapping if provided, otherwise
+		// fall back to the mnemonic's index in the list.
+		source := mnemonicSrc.Name
+		if source == "" {
+			source = fmt.Sprintf("mnemonic-%d", m)
+		}
+
 		for i := uint64(0); i < mnemonicSrc.Count; i++ {
 			valIndex := offset + i
 			idx := mnemonicSrc.Start + i
@@ -61,6 +68,8 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 					PublicKey:             phase0.BLSPubKey(signingSK.PublicKey().Marshal()),
 					WithdrawalCredentials: make([]byte, 32),
 					Status:                mnemonicSrc.Status,
+					Source:                source,
+					SourceKeyIndex:        idx,
 				}
 
 				if mnemonicSrc.WdPrefix != "" && mnemonicSrc.WdPrefix != "0x00" && mnemonicSrc.WdAddress != "" {
@@ -145,6 +154,7 @@ func seedFromMnemonic(mnemonic string) (seed []byte, err error) {
 
 type MnemonicSrc struct {
 	Mnemonic  string          `yaml:"mnemonic"`
+	Name      string          `yaml:"name"`
 	Start     uint64          `yaml:"start"`
 	Count     uint64          `yaml:"count"`
 	Balance   uint64          `yaml:"balance"`

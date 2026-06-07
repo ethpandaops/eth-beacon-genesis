@@ -12,6 +12,10 @@ import (
 	"github.com/ethpandaops/go-eth2-client/spec/phase0"
 )
 
+// fileSource is the Source tag assigned to validators loaded from the
+// additional-validators file.
+const fileSource = "additional-validators"
+
 func LoadValidatorsFromFile(validatorsConfigPath string) ([]*Validator, error) {
 	validatorsFile, err := os.Open(validatorsConfigPath)
 	if err != nil {
@@ -54,6 +58,8 @@ func LoadValidatorsFromFile(validatorsConfigPath string) ([]*Validator, error) {
 		validatorEntry := &Validator{
 			PublicKey:             phase0.BLSPubKey(pubKey),
 			WithdrawalCredentials: make([]byte, 32),
+			Source:                fileSource,
+			SourceKeyIndex:        uint64(len(validators)),
 		}
 
 		// Withdrawal credentials

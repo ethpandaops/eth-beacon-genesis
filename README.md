@@ -42,6 +42,9 @@ eth-genesis-state-generator beaconchain \
 - `--additional-validators`: Path to file with additional genesis validators
 - `--state-output`: Output path for SSZ genesis state
 - `--json-output`: Output path for JSON genesis state
+- `--shuffle-validators`: Shuffle the validator set block-wise to add variance to the validator ordering
+- `--shuffle-seed`: Seed for the block-wise validator shuffle (defaults to the genesis fork version; only used with `--shuffle-validators`)
+- `--validators-mapping-output`: Output path for the validator mapping (state index ranges to source key ranges) in YAML format
 - `--quiet`: Suppress output
 
 ### Configuration Files
@@ -91,6 +94,7 @@ eth-genesis-state-generator beaconchain \
 #### Validator Mnemonics File
 ```yaml
 - mnemonic: ""                                             # a 24 word BIP 39 mnemonic
+  name: ""                                                 # optional source name used in the validator mapping (defaults to mnemonic-<index>)
   start: 0                                                 # account index to start from
   count: 100                                               # number of validators to generate
   balance: 32000000000                                     # effective balance

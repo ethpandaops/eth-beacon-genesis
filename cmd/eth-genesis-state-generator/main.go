@@ -54,6 +54,18 @@ var (
 		Name:  "json-output",
 		Usage: "Path to the file to write the genesis state to in JSON format",
 	}
+	shuffleValidatorsFlag = &cli.BoolFlag{
+		Name:  "shuffle-validators",
+		Usage: "Shuffle the validator set block-wise to add variance to the validator ordering",
+	}
+	shuffleSeedFlag = &cli.Uint64Flag{
+		Name:  "shuffle-seed",
+		Usage: "Seed for the block-wise validator shuffle (defaults to the genesis fork version; only used with --shuffle-validators)",
+	}
+	validatorsMappingOutputFlag = &cli.StringFlag{
+		Name:  "validators-mapping-output",
+		Usage: "Path to write the validator mapping (state index ranges to source key ranges) in YAML format",
+	}
 
 	quietFlag = &cli.BoolFlag{
 		Name:    "quiet",
@@ -72,6 +84,7 @@ var (
 				Flags: []cli.Flag{
 					eth1ConfigFlag, configFlag, mnemonicsFileFlag, validatorsFileFlag,
 					shadowForkBlockFlag, shadowForkRPCFlag, stateOutputFlag, jsonOutputFlag,
+					shuffleValidatorsFlag, shuffleSeedFlag, validatorsMappingOutputFlag,
 					quietFlag,
 				},
 				Action:    runDevnet,
@@ -107,6 +120,9 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 	shadowForkRPC := cmd.String(shadowForkRPCFlag.Name)
 	stateOutputFile := cmd.String(stateOutputFlag.Name)
 	jsonOutputFile := cmd.String(jsonOutputFlag.Name)
+	shuffleValidators := cmd.Bool(shuffleValidatorsFlag.Name)
+	shuffleSeed := cmd.Uint64(shuffleSeedFlag.Name)
+	validatorsMappingOutput := cmd.String(validatorsMappingOutputFlag.Name)
 	quiet := cmd.Bool(quietFlag.Name)
 
 	if quiet {
@@ -182,6 +198,23 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	logrus.Infof("loaded %d validators. total balance: %d ETH", len(clValidators), totalBalance/1_000_000_000)
+
+	if shuffleValidators {
+		if !cmd.IsSet(shuffleSeedFlag.Name) {
+			shuffleSeed = validators.SeedFromForkVersion(clConfig.GetBytesDefault("GENESIS_FORK_VERSION", []byte{}))
+		}
+
+		validators.ShuffleValidators(clValidators, shuffleSeed)
+		logrus.Infof("shuffled validator set block-wise (seed: %d)", shuffleSeed)
+	}
+
+	if validatorsMappingOutput != "" {
+		if err := validators.WriteMappingFile(validatorsMappingOutput, clValidators); err != nil {
+			return fmt.Errorf("failed to write validator mapping: %w", err)
+		}
+
+		logrus.Infof("wrote validator mapping to: %s", validatorsMappingOutput)
+	}
 
 	builder := beaconchain.NewGenesisBuilder(elGenesis, clConfig)
 	builder.AddValidators(clValidators)
