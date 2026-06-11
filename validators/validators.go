@@ -17,4 +17,8 @@ type Validator struct {
 	WithdrawalCredentials []byte
 	Balance               *uint64
 	Status                ValidatorStatus
+
+	// Source identifies where the key originated
+	Source         string
+	SourceKeyIndex uint64
 }
