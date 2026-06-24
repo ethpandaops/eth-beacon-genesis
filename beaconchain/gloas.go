@@ -10,7 +10,6 @@ import (
 	"github.com/ethpandaops/go-eth2-client/spec/altair"
 	"github.com/ethpandaops/go-eth2-client/spec/bellatrix"
 	"github.com/ethpandaops/go-eth2-client/spec/capella"
-	"github.com/ethpandaops/go-eth2-client/spec/electra"
 	"github.com/ethpandaops/go-eth2-client/spec/gloas"
 	"github.com/ethpandaops/go-eth2-client/spec/phase0"
 	"github.com/sirupsen/logrus"
@@ -70,7 +69,7 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		syncCommitteeMaskBytes++
 	}
 
-	emptyExecutionRequests := &electra.ExecutionRequests{}
+	emptyExecutionRequests := &gloas.ExecutionRequests{}
 
 	executionRequestsRoot, err := b.dynSsz.HashTreeRoot(emptyExecutionRequests)
 	if err != nil {

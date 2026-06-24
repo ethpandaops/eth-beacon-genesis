@@ -79,7 +79,7 @@ func (b *bellatrixBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		GasUsed:          genesisBlock.GasUsed(),
 		Timestamp:        genesisBlock.Time(),
 		ExtraData:        extra,
-		BaseFeePerGas:    baseFeeBytes,
+		BaseFeePerGasLE:  baseFeeBytes,
 		BlockHash:        phase0.Hash32(genesisBlockHash),
 		TransactionsRoot: transactionsRoot,
 	}
