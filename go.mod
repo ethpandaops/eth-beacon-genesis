@@ -3,8 +3,8 @@ module github.com/ethpandaops/eth-beacon-genesis
 go 1.25.0
 
 require (
-	github.com/ethereum/go-ethereum v1.17.2
-	github.com/ethpandaops/go-eth2-client v0.1.5
+	github.com/ethereum/go-ethereum v1.17.4
+	github.com/ethpandaops/go-eth2-client v0.1.6-0.20260629130636-6d2ee1978c4e
 	github.com/herumi/bls-eth-go-binary v1.37.0
 	github.com/holiman/uint256 v1.3.2
 	github.com/pk910/dynamic-ssz v1.3.2
@@ -35,6 +35,7 @@ require (
 	github.com/ethereum/c-kzg-4844/v2 v2.1.6 // indirect
 	github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab // indirect
 	github.com/ferranbt/fastssz v1.0.0 // indirect
+	github.com/fjl/jsonw v0.1.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -78,5 +79,3 @@ require (
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/ethereum/go-ethereum => github.com/ethereum/go-ethereum v1.17.3-0.20260421080339-499762852cf2
