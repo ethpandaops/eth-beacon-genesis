@@ -49,7 +49,7 @@ func TestGenerateValidatorsByMnemonic_Valid(t *testing.T) {
 - mnemonic: "rare observe fox place unfold bargain cannon direct title sorry rabbit juice body autumn quality decrease mixture transfer crisp unveil path depend brick scissors"
   start: 20
   count: 1
-  wd_prefix: "0x03"
+  wd_prefix: "0xb0"
   wd_address: "0x1234567890abcdef1234567890abcdef12345678"
 `)
 
@@ -112,8 +112,8 @@ func TestGenerateValidatorsByMnemonic_Valid(t *testing.T) {
 	}
 
 	// Validator 3
-	if value, _ := hex.DecodeString("0300000000000000000000001234567890abcdef1234567890abcdef12345678"); !bytes.Equal(validators[3].WithdrawalCredentials, value) {
-		t.Fatalf("expected validator 3 to have withdrawal credentials 0x0300000000000000000000001234567890abcdef1234567890abcdef12345678, got 0x%x", validators[3].WithdrawalCredentials)
+	if value, _ := hex.DecodeString("b000000000000000000000001234567890abcdef1234567890abcdef12345678"); !bytes.Equal(validators[3].WithdrawalCredentials, value) {
+		t.Fatalf("expected validator 3 to have withdrawal credentials 0xb000000000000000000000001234567890abcdef1234567890abcdef12345678, got 0x%x", validators[3].WithdrawalCredentials)
 	}
 
 	if validators[3].Balance != nil {
