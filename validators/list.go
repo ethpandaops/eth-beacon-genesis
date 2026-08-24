@@ -74,9 +74,9 @@ func LoadValidatorsFromFile(validatorsConfigPath string) ([]*Validator, error) {
 
 		switch withdrawalCred[0] {
 		case 0x00:
-		case 0x01, 0x02, 0x03:
+		case 0x01, 0x02, 0xB0:
 			if !bytes.Equal(withdrawalCred[1:12], []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) {
-				return nil, fmt.Errorf("invalid withdrawal credentials (invalid 0x01/0x02/0x03 cred) on line %v", lineNum)
+				return nil, fmt.Errorf("invalid withdrawal credentials (invalid 0x01/0x02/0xB0 cred) on line %v", lineNum)
 			}
 		default:
 			return nil, fmt.Errorf("invalid withdrawal credentials (invalid type) on line %v", lineNum)

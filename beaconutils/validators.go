@@ -15,7 +15,7 @@ func SeparateBuildersFromValidators(vals []*validators.Validator) (builders, val
 	validatorList = make([]*validators.Validator, 0, len(vals))
 
 	for _, val := range vals {
-		if val.WithdrawalCredentials[0] == 0x03 {
+		if val.WithdrawalCredentials[0] == 0xB0 {
 			builders = append(builders, val)
 		} else {
 			validatorList = append(validatorList, val)
@@ -56,8 +56,8 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 			if effectiveBalance > maxEffectiveBalanceElectra {
 				effectiveBalance = maxEffectiveBalanceElectra
 			}
-		} else if !isElectraActive || val.WithdrawalCredentials[0] != 0x03 {
-			// 0x03 validators have no max effective balance cap; all others are capped at maxEffectiveBalance
+		} else {
+			// all others are capped at maxEffectiveBalance
 			if effectiveBalance > maxEffectiveBalance {
 				effectiveBalance = maxEffectiveBalance
 			}
