@@ -10,12 +10,24 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
+// BuilderWithdrawalPrefix is the withdrawal credential prefix identifying a builder
+// (BUILDER_WITHDRAWAL_PREFIX, consensus-specs v1.7.0-alpha.12+).
+const BuilderWithdrawalPrefix = 0xB0
+
+// payloadBuilderVersion is the version assigned to execution payload builders in the
+// builder registry (PAYLOAD_BUILDER_VERSION).
+const payloadBuilderVersion = 0
+
+func isBuilderWithdrawalCredential(withdrawalCredentials []byte) bool {
+	return withdrawalCredentials[0] == BuilderWithdrawalPrefix
+}
+
 func SeparateBuildersFromValidators(vals []*validators.Validator) (builders, validatorList []*validators.Validator) {
 	builders = make([]*validators.Validator, 0, len(vals))
 	validatorList = make([]*validators.Validator, 0, len(vals))
 
 	for _, val := range vals {
-		if val.WithdrawalCredentials[0] == 0x03 {
+		if isBuilderWithdrawalCredential(val.WithdrawalCredentials) {
 			builders = append(builders, val)
 		} else {
 			validatorList = append(validatorList, val)
@@ -56,11 +68,8 @@ func GetGenesisValidators(cfg *beaconconfig.Config, vals []*validators.Validator
 			if effectiveBalance > maxEffectiveBalanceElectra {
 				effectiveBalance = maxEffectiveBalanceElectra
 			}
-		} else if !isElectraActive || val.WithdrawalCredentials[0] != 0x03 {
-			// 0x03 validators have no max effective balance cap; all others are capped at maxEffectiveBalance
-			if effectiveBalance > maxEffectiveBalance {
-				effectiveBalance = maxEffectiveBalance
-			}
+		} else if effectiveBalance > maxEffectiveBalance {
+			effectiveBalance = maxEffectiveBalance
 		}
 
 		validator := &phase0.Validator{
@@ -135,7 +144,7 @@ func GetGenesisBuilders(cfg *beaconconfig.Config, vals []*validators.Validator) 
 
 		builder := &gloas.Builder{
 			PublicKey:         val.PublicKey,
-			Version:           val.WithdrawalCredentials[0],
+			Version:           payloadBuilderVersion,
 			ExecutionAddress:  executionAddress,
 			DepositEpoch:      0,
 			WithdrawableEpoch: phase0.Epoch(cfg.GetUintDefault("FAR_FUTURE_EPOCH", 18446744073709551615)),
