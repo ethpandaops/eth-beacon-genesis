@@ -63,7 +63,12 @@ func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Vali
 // Note: Committee can contain duplicate indices for small validator sets (< SYNC_COMMITTEE_SIZE + 128)
 func computeGenesisSyncCommitteeIndices(cfg *beaconconfig.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
 	syncCommitteeSize := cfg.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
+
 	shuffleRoundCount := cfg.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
+	if shuffleRoundCount > 255 {
+		shuffleRoundCount = 255
+	}
+
 	maxEffectiveBalance := cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
 	domainSyncCommittee := cfg.GetBytesDefault("DOMAIN_SYNC_COMMITTEE", []byte{0x07, 0x00, 0x00, 0x00})
 	syncCommitteeIndices := make([]phase0.ValidatorIndex, 0, syncCommitteeSize)
@@ -112,7 +117,12 @@ func computeGenesisSyncCommitteeIndices(cfg *beaconconfig.Config, active []phase
 
 func computeGenesisSyncCommitteeIndicesElectra(cfg *beaconconfig.Config, active []phase0.ValidatorIndex, validators []*phase0.Validator, randaoMix phase0.Hash32) []phase0.ValidatorIndex {
 	syncCommitteeSize := cfg.GetUintDefault("SYNC_COMMITTEE_SIZE", 512)
+
 	shuffleRoundCount := cfg.GetUintDefault("SHUFFLE_ROUND_COUNT", 90)
+	if shuffleRoundCount > 255 {
+		shuffleRoundCount = 255
+	}
+
 	maxEffectiveBalance := cfg.GetUintDefault("MAX_EFFECTIVE_BALANCE", 32000000000)
 	domainSyncCommittee := cfg.GetBytesDefault("DOMAIN_SYNC_COMMITTEE", []byte{0x07, 0x00, 0x00, 0x00})
 	syncCommitteeIndices := make([]phase0.ValidatorIndex, 0, syncCommitteeSize)
@@ -230,7 +240,7 @@ func innerPermuteIndex(hashFn func([]byte) [32]byte, rounds uint8, input phase0.
 		// - round number is still in 32
 		// - mix in the position for randomness, except the last byte of it,
 		//     which will be used later to select a bit from the resulting hash.
-		binary.LittleEndian.PutUint32(buf[hPivotViewSize:], uint32(position>>8))
+		binary.LittleEndian.PutUint32(buf[hPivotViewSize:], uint32(position>>8&0xffffffff))
 		source := hashFn(buf)
 		// spec: byte = source[(position % 256) // 8]
 		// Effectively keep the first 5 bits of the byte value of the position,
