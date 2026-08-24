@@ -17,7 +17,7 @@ func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Vali
 
 	for index, validator := range validators {
 		if validator.ActivationEpoch == 0 && validator.ExitEpoch > phase0.Epoch(0) {
-			activeIndices = append(activeIndices, phase0.ValidatorIndex(index)) //nolint:gosec // no overflow
+			activeIndices = append(activeIndices, phase0.ValidatorIndex(index))
 		}
 	}
 
@@ -83,7 +83,7 @@ func computeGenesisSyncCommitteeIndices(cfg *beaconconfig.Config, active []phase
 
 	for uint64(len(syncCommitteeIndices)) < syncCommitteeSize {
 		shuffledIndex := PermuteIndex(
-			uint8(shuffleRoundCount), //nolint:gosec // no overflow
+			uint8(shuffleRoundCount),
 			i%phase0.ValidatorIndex(len(active)),
 			uint64(len(active)),
 			periodSeed,
@@ -132,7 +132,7 @@ func computeGenesisSyncCommitteeIndicesElectra(cfg *beaconconfig.Config, active 
 
 	for uint64(len(syncCommitteeIndices)) < syncCommitteeSize {
 		shuffledIndex := PermuteIndex(
-			uint8(shuffleRoundCount), //nolint:gosec // no overflow
+			uint8(shuffleRoundCount),
 			i%phase0.ValidatorIndex(len(active)),
 			uint64(len(active)),
 			periodSeed,
@@ -161,7 +161,7 @@ func computeGenesisSyncCommitteeIndicesElectra(cfg *beaconconfig.Config, active 
 }
 
 func computeGenesisSeed(mix phase0.Hash32, epoch phase0.Epoch, domainType phase0.DomainType) phase0.Root {
-	data := []byte{}
+	data := make([]byte, 0, len(domainType)+8+len(mix))
 	data = append(data, domainType[:]...)
 	data = append(data, UintToBytes(uint64(epoch))...)
 	data = append(data, mix[:]...)
@@ -230,7 +230,7 @@ func innerPermuteIndex(hashFn func([]byte) [32]byte, rounds uint8, input phase0.
 		// - round number is still in 32
 		// - mix in the position for randomness, except the last byte of it,
 		//     which will be used later to select a bit from the resulting hash.
-		binary.LittleEndian.PutUint32(buf[hPivotViewSize:], uint32(position>>8)) //nolint:gosec // no overflow
+		binary.LittleEndian.PutUint32(buf[hPivotViewSize:], uint32(position>>8))
 		source := hashFn(buf)
 		// spec: byte = source[(position % 256) // 8]
 		// Effectively keep the first 5 bits of the byte value of the position,

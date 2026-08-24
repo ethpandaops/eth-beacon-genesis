@@ -20,7 +20,7 @@ func GetGenesisProposers(clConfig *beaconconfig.Config, validators []*phase0.Val
 
 	for i, validator := range validators {
 		if validator.ActivationEpoch == 0 && validator.ExitEpoch > phase0.Epoch(0) { // Active at genesis
-			activeIndices = append(activeIndices, phase0.ValidatorIndex(i)) //nolint:gosec // no overflow
+			activeIndices = append(activeIndices, phase0.ValidatorIndex(i))
 		}
 	}
 
@@ -71,7 +71,7 @@ func computeProposerIndex(clConfig *beaconconfig.Config, validators []*phase0.Va
 	for i := uint64(0); ; i++ {
 		// Use PermuteIndex for shuffling (same as sync committee selection)
 		shuffledIndex := PermuteIndex(
-			uint8(shuffleRoundCount), //nolint:gosec // no overflow
+			uint8(shuffleRoundCount),
 			phase0.ValidatorIndex(i%activeCount),
 			activeCount,
 			phase0.Root(slotSeed),
