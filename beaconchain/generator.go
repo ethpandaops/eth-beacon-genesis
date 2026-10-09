@@ -77,6 +77,12 @@ var ForkConfigs = []ForkConfig{
 		VersionField: "GLOAS_FORK_VERSION",
 		BuilderFn:    NewGloasBuilder,
 	},
+	{
+		Version:      spec.DataVersionHeze,
+		EpochField:   "HEZE_FORK_EPOCH",
+		VersionField: "HEZE_FORK_VERSION",
+		BuilderFn:    NewHezeBuilder,
+	},
 }
 
 func init() {
