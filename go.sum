@@ -66,8 +66,8 @@ github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab h1:rvv6MJ
 github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab/go.mod h1:IuLm4IsPipXKF7CW5Lzf68PIbZ5yl7FFd74l/E0o9A8=
 github.com/ethereum/go-ethereum v1.17.6 h1:27mdzjoN/bjz+rgjjZPGnD6E44W/Nd+vG+FKQFd/heg=
 github.com/ethereum/go-ethereum v1.17.6/go.mod h1:nl9wZjMuIjAottU6bq82UihXPbyY0jHHwkYXhnYhmU4=
-github.com/ethpandaops/go-eth2-client v0.1.11-0.20261009105149-c596ad606a84 h1:Qo8bfHIYx916vt5jd52o/zpWXriOUeAqlyBfkG710j0=
-github.com/ethpandaops/go-eth2-client v0.1.11-0.20261009105149-c596ad606a84/go.mod h1:sIVbaug0GsltsJS+hj8ID4dmWBIt8TXoNIesvuBCGt0=
+github.com/ethpandaops/go-eth2-client v0.1.11-0.20261009113423-329cfee1d481 h1:GCNA0OapQAQYE+RmrYOJPIpKear76ttdHFjktX0GmrY=
+github.com/ethpandaops/go-eth2-client v0.1.11-0.20261009113423-329cfee1d481/go.mod h1:sIVbaug0GsltsJS+hj8ID4dmWBIt8TXoNIesvuBCGt0=
 github.com/ferranbt/fastssz v1.0.0 h1:9EXXYsracSqQRBQiHeaVsG/KQeYblPf40hsQPb9Dzk8=
 github.com/ferranbt/fastssz v1.0.0/go.mod h1:Ea3+oeoRGGLGm5shYAeDgu6PGUlcvQhE2fILyD9+tGg=
 github.com/fjl/jsonw v0.1.0 h1:V3MyR79fjLpn/+bMgvegdGUIhoJOzjmqWcKDgcOmY1I=
