@@ -5,7 +5,7 @@ A tool for generating Ethereum consensus layer (beacon chain) genesis states for
 ## Features
 
 - Generate beacon chain genesis states from execution layer genesis and validator configurations
-- Support for all forks up to Electra
+- Support for all forks up to Heze
 - Support for validator onboarding via mnemonics or direct key imports
 - Configurable genesis parameters
 - Output in both SSZ and JSON formats
@@ -89,6 +89,12 @@ eth-genesis-state-generator beaconchain \
     DENEB_FORK_EPOCH: 0
     ELECTRA_FORK_VERSION: 0x05000000
     ELECTRA_FORK_EPOCH: 0
+    FULU_FORK_VERSION: 0x06000000
+    FULU_FORK_EPOCH: 0
+    GLOAS_FORK_VERSION: 0x07000000
+    GLOAS_FORK_EPOCH: 0
+    HEZE_FORK_VERSION: 0x08000000
+    HEZE_FORK_EPOCH: 0
 ```
 
 #### Validator Mnemonics File
