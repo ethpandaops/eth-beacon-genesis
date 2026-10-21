@@ -3,17 +3,17 @@ module github.com/ethpandaops/eth-beacon-genesis
 go 1.26.10
 
 require (
-	github.com/ethereum/go-ethereum v1.17.6
+	github.com/ethereum/go-ethereum v1.17.8
 	github.com/ethpandaops/go-eth2-client v0.1.11-0.20261009113423-329cfee1d481
-	github.com/herumi/bls-eth-go-binary v1.37.0
+	github.com/herumi/bls-eth-go-binary v1.38.0
 	github.com/holiman/uint256 v1.3.2
-	github.com/pk910/dynamic-ssz v1.3.3-0.20260921152246-990798fa9718
+	github.com/pk910/dynamic-ssz v1.4.0
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/urfave/cli/v3 v3.13.0
+	github.com/urfave/cli/v3 v3.14.0
 	github.com/wealdtech/go-eth2-util v1.8.2
-	golang.org/x/sync v0.23.0
+	golang.org/x/sync v0.24.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
