@@ -13,7 +13,7 @@ import (
 )
 
 type rpcBlock struct {
-	Hash         common.Hash         `json:"hash"`
+	Hash         *common.Hash        `json:"hash"`
 	Transactions []rpcTransaction    `json:"transactions"`
 	UncleHashes  []common.Hash       `json:"uncles"`
 	Withdrawals  []*types.Withdrawal `json:"withdrawals,omitempty"`
@@ -55,11 +55,20 @@ func ParseEthBlock(blockData json.RawMessage) (*types.Block, error) {
 		txs[idx] = body.Transactions[idx].tx
 	}
 
-	return types.NewBlockWithHeader(&resultHeader).WithBody(types.Body{
+	block := types.NewBlockWithHeader(&resultHeader).WithBody(types.Body{
 		Transactions: txs,
 		Uncles:       nil,
 		Withdrawals:  body.Withdrawals,
-	}), nil
+	})
+
+	// The source declares a block hash; the hash we recompute from the decoded
+	// header must match it, or a header field we failed to decode makes every
+	// value we derive from this block wrong.
+	if body.Hash != nil && block.Hash() != *body.Hash {
+		return nil, fmt.Errorf("block hash mismatch: source declares %s, recomputed %s from the decoded header", *body.Hash, block.Hash())
+	}
+
+	return block, nil
 }
 
 func LoadBlockFromFile(filePath string) (*types.Block, error) {
