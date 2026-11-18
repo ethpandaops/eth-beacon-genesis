@@ -151,17 +151,16 @@ func validatorKeyName(i uint64) string {
 	return fmt.Sprintf("m/12381/3600/%d/0/0", i)
 }
 
-func xmssSeedKeyName(i uint64) string {
-	return fmt.Sprintf("m/12381/3600/%d/1/0", i)
-}
+const xmssSeedDomain = "leanxmss-seed"
 
 func deriveXMSSPubkey(seed []byte, idx uint64) (pubkey [32]byte, err error) {
-	xmssSeedSK, err := e2util.PrivateKeyFromSeedAndPath(seed, xmssSeedKeyName(idx))
+	signingSK, err := e2util.PrivateKeyFromSeedAndPath(seed, validatorKeyName(idx))
 	if err != nil {
 		return pubkey, err
 	}
 
-	copy(pubkey[:], leanxmss.NewKeyFromSeed([32]byte(xmssSeedSK.Marshal())).PublicKey().Bytes())
+	xmssSeed := sha256.Sum256(append([]byte(xmssSeedDomain), signingSK.Marshal()...))
+	copy(pubkey[:], leanxmss.NewKeyFromSeed(xmssSeed).PublicKey().Bytes())
 
 	return pubkey, nil
 }

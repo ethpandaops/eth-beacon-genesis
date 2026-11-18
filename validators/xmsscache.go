@@ -24,7 +24,7 @@ type XMSSPubkeySource struct {
 }
 
 func mnemonicFingerprint(seed []byte) string {
-	hash := sha256.Sum256(seed)
+	hash := sha256.Sum256(append([]byte(xmssSeedDomain), seed...))
 	return hex.EncodeToString(hash[:8])
 }
 

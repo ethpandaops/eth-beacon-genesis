@@ -28,3 +28,8 @@ type Validator struct {
 	Source         string
 	SourceKeyIndex uint64
 }
+
+func (v *Validator) UseXMSSPublicKey() {
+	v.PublicKey = phase0.BLSPubKey{}
+	copy(v.PublicKey[:], v.PQKeys.XMSSPublicKey[:])
+}

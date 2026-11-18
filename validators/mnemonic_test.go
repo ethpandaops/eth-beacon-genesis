@@ -305,7 +305,7 @@ func TestGenerateValidatorsByMnemonic_PQKeys(t *testing.T) {
 		}
 	}
 
-	if value, _ := hex.DecodeString("db6d8f70267c049f6d6dbba0c5e26442d25ed8dff77e0aca4d0ddd93a07c4790"); !bytes.Equal(validators[0].PQKeys.XMSSPublicKey[:], value) {
+	if value, _ := hex.DecodeString("155a29b971da2b771fdf52c768af63fa03f78f25487e3e0ed03d012b7039d88b"); !bytes.Equal(validators[0].PQKeys.XMSSPublicKey[:], value) {
 		t.Fatalf("unexpected xmss public key for validator 0: %x", validators[0].PQKeys.XMSSPublicKey)
 	}
 
