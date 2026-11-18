@@ -10,13 +10,18 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
-const xmssPubkeySize = 32
+const (
+	xmssRecordSize    = 64
+	xmssKeyFileDomain = "leanxmss-vrf-keys"
+)
 
 type XMSSPubkeySource struct {
 	CacheDir string
@@ -24,7 +29,7 @@ type XMSSPubkeySource struct {
 }
 
 func mnemonicFingerprint(seed []byte) string {
-	hash := sha256.Sum256(append([]byte(xmssSeedDomain), seed...))
+	hash := sha256.Sum256(append([]byte(xmssKeyFileDomain), seed...))
 	return hex.EncodeToString(hash[:8])
 }
 
@@ -32,61 +37,91 @@ func (s *XMSSPubkeySource) fileName(seed []byte) string {
 	return mnemonicFingerprint(seed) + ".bin"
 }
 
-func (s *XMSSPubkeySource) pubkeys(seed []byte, start, count uint64) ([][32]byte, error) {
-	pubkeys := make([][32]byte, count)
+func (s *XMSSPubkeySource) keys(seed []byte, start, count uint64) ([]PQKeyMaterial, error) {
+	keys := make([]PQKeyMaterial, count)
 
 	if s.CacheDir != "" {
-		if err := s.readCache(seed, start, pubkeys); err != nil {
-			return nil, fmt.Errorf("failed to read xmss pubkey cache: %w", err)
+		if err := s.readCache(seed, start, keys); err != nil {
+			return nil, fmt.Errorf("failed to read xmss key cache: %w", err)
 		}
 	}
 
-	missing := countMissing(pubkeys)
+	missing := countMissing(keys)
 	cached := int(count) - missing //nolint:gosec // validator counts fit in int
 
 	if missing > 0 && s.URL != "" {
-		if err := s.fetch(seed, start, pubkeys); err != nil {
-			logrus.Warnf("failed to fetch xmss pubkeys, deriving them instead: %v", err)
+		if err := s.fetch(seed, start, keys); err != nil {
+			logrus.Warnf("failed to fetch xmss keys, deriving them instead: %v", err)
 		}
 	}
 
-	fetched := missing - countMissing(pubkeys)
-	derived := 0
+	fetched := missing - countMissing(keys)
+	derived := missing - fetched
 
-	for i := range pubkeys {
-		if pubkeys[i] != [32]byte{} {
-			continue
-		}
-
-		pubkey, err := deriveXMSSPubkey(seed, start+uint64(i))
-		if err != nil {
+	if derived > 0 {
+		if err := deriveMissing(seed, start, keys); err != nil {
 			return nil, err
-		}
-
-		pubkeys[i] = pubkey
-		derived++
-
-		if derived%10 == 0 {
-			logrus.Infof("...derived leanXMSS key %d/%d", derived, missing-fetched)
 		}
 	}
 
 	logrus.Infof("leanXMSS keys: %d from cache, %d fetched, %d derived", cached, fetched, derived)
 
 	if s.CacheDir != "" && fetched+derived > 0 {
-		if err := s.writeCache(seed, start, pubkeys); err != nil {
-			return nil, fmt.Errorf("failed to write xmss pubkey cache: %w", err)
+		if err := s.writeCache(seed, start, keys); err != nil {
+			return nil, fmt.Errorf("failed to write xmss key cache: %w", err)
 		}
 	}
 
-	return pubkeys, nil
+	return keys, nil
 }
 
-func countMissing(pubkeys [][32]byte) int {
+func deriveMissing(seed []byte, start uint64, keys []PQKeyMaterial) error {
+	var g errgroup.Group
+
+	g.SetLimit(runtime.NumCPU())
+
+	total := countMissing(keys)
+	derived := 0
+
+	for i := range keys {
+		if keys[i].XMSSPublicKey != [32]byte{} {
+			continue
+		}
+
+		idx := start + uint64(i)
+
+		g.Go(func() error {
+			root, err := deriveVRFRoot(seed, idx)
+			if err != nil {
+				return err
+			}
+
+			keys[i].VRFRoot = root
+
+			return nil
+		})
+
+		pubkey, err := deriveXMSSPubkey(seed, idx)
+		if err != nil {
+			return err
+		}
+
+		keys[i].XMSSPublicKey = pubkey
+		derived++
+
+		if derived%10 == 0 {
+			logrus.Infof("...derived leanXMSS key %d/%d", derived, total)
+		}
+	}
+
+	return g.Wait()
+}
+
+func countMissing(keys []PQKeyMaterial) int {
 	missing := 0
 
-	for i := range pubkeys {
-		if pubkeys[i] == [32]byte{} {
+	for i := range keys {
+		if keys[i].XMSSPublicKey == [32]byte{} {
 			missing++
 		}
 	}
@@ -94,15 +129,16 @@ func countMissing(pubkeys [][32]byte) int {
 	return missing
 }
 
-func fillMissing(pubkeys [][32]byte, data []byte) {
-	for i := range pubkeys {
-		if pubkeys[i] == [32]byte{} && len(data) >= (i+1)*xmssPubkeySize {
-			copy(pubkeys[i][:], data[i*xmssPubkeySize:])
+func fillMissing(keys []PQKeyMaterial, data []byte) {
+	for i := range keys {
+		if keys[i].XMSSPublicKey == [32]byte{} && len(data) >= (i+1)*xmssRecordSize {
+			copy(keys[i].XMSSPublicKey[:], data[i*xmssRecordSize:])
+			copy(keys[i].VRFRoot[:], data[i*xmssRecordSize+32:])
 		}
 	}
 }
 
-func (s *XMSSPubkeySource) readCache(seed []byte, start uint64, pubkeys [][32]byte) error {
+func (s *XMSSPubkeySource) readCache(seed []byte, start uint64, keys []PQKeyMaterial) error {
 	file, err := os.Open(filepath.Join(s.CacheDir, s.fileName(seed)))
 	if os.IsNotExist(err) {
 		return nil
@@ -114,19 +150,19 @@ func (s *XMSSPubkeySource) readCache(seed []byte, start uint64, pubkeys [][32]by
 
 	defer file.Close()
 
-	data := make([]byte, len(pubkeys)*xmssPubkeySize)
+	data := make([]byte, len(keys)*xmssRecordSize)
 
-	n, err := file.ReadAt(data, int64(start)*xmssPubkeySize) //nolint:gosec // key indexes fit in int64
+	n, err := file.ReadAt(data, int64(start)*xmssRecordSize) //nolint:gosec // key indexes fit in int64
 	if err != nil && !errors.Is(err, io.EOF) {
 		return err
 	}
 
-	fillMissing(pubkeys, data[:n])
+	fillMissing(keys, data[:n])
 
 	return nil
 }
 
-func (s *XMSSPubkeySource) writeCache(seed []byte, start uint64, pubkeys [][32]byte) error {
+func (s *XMSSPubkeySource) writeCache(seed []byte, start uint64, keys []PQKeyMaterial) error {
 	if err := os.MkdirAll(s.CacheDir, 0o755); err != nil {
 		return err
 	}
@@ -138,17 +174,18 @@ func (s *XMSSPubkeySource) writeCache(seed []byte, start uint64, pubkeys [][32]b
 
 	defer file.Close()
 
-	data := make([]byte, 0, len(pubkeys)*xmssPubkeySize)
-	for i := range pubkeys {
-		data = append(data, pubkeys[i][:]...)
+	data := make([]byte, 0, len(keys)*xmssRecordSize)
+	for i := range keys {
+		data = append(data, keys[i].XMSSPublicKey[:]...)
+		data = append(data, keys[i].VRFRoot[:]...)
 	}
 
-	_, err = file.WriteAt(data, int64(start)*xmssPubkeySize) //nolint:gosec // key indexes fit in int64
+	_, err = file.WriteAt(data, int64(start)*xmssRecordSize) //nolint:gosec // key indexes fit in int64
 
 	return err
 }
 
-func (s *XMSSPubkeySource) fetch(seed []byte, start uint64, pubkeys [][32]byte) error {
+func (s *XMSSPubkeySource) fetch(seed []byte, start uint64, keys []PQKeyMaterial) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
@@ -157,8 +194,8 @@ func (s *XMSSPubkeySource) fetch(seed []byte, start uint64, pubkeys [][32]byte) 
 		return err
 	}
 
-	first := start * xmssPubkeySize
-	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", first, first+uint64(len(pubkeys))*xmssPubkeySize-1))
+	first := start * xmssRecordSize
+	req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", first, first+uint64(len(keys))*xmssRecordSize-1))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -186,7 +223,7 @@ func (s *XMSSPubkeySource) fetch(seed []byte, start uint64, pubkeys [][32]byte) 
 		return fmt.Errorf("unexpected status %s for %s", resp.Status, req.URL)
 	}
 
-	fillMissing(pubkeys, data)
+	fillMissing(keys, data)
 
 	return nil
 }

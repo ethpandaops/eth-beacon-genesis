@@ -6,7 +6,7 @@ A tool for generating Ethereum consensus layer (beacon chain) genesis states for
 
 - Generate beacon chain genesis states from execution layer genesis and validator configurations
 - Support for all forks up to Heze
-- Support for the EIP-8450 post-quantum key registry on top of Heze, with leanXMSS keys for genesis validators and builders
+- Support for the consensus-specs `pq` feature fork (`PQ_FORK_EPOCH: 0`), with leanXMSS public keys and VRF roots for genesis validators and builders
 - Support for validator onboarding via mnemonics or direct key imports
 - Configurable genesis parameters
 - Output in both SSZ and JSON formats
@@ -44,9 +44,8 @@ eth-genesis-state-generator beaconchain \
 - `--state-output`: Output path for SSZ genesis state
 - `--json-output`: Output path for JSON genesis state
 - `--shuffle-validators`: Shuffle the validator set block-wise to add variance to the validator ordering
-- `--xmss-pubkey-cache`: Directory caching leanXMSS public keys derived from mnemonics
-- `--xmss-pubkey-url`: Base URL to fetch precomputed leanXMSS public keys from
-- `--xmss-validator-pubkeys`: Use leanXMSS public keys as the validators' public keys
+- `--xmss-pubkey-cache`: Directory caching leanXMSS public keys and VRF roots derived from mnemonics
+- `--xmss-pubkey-url`: Base URL to fetch precomputed leanXMSS public keys and VRF roots from
 - `--shuffle-seed`: Seed for the block-wise validator shuffle (defaults to the genesis fork version; only used with `--shuffle-validators`)
 - `--validators-mapping-output`: Output path for the validator mapping (state index ranges to source key ranges) in YAML format
 - `--quiet`: Suppress output
@@ -115,14 +114,12 @@ eth-genesis-state-generator beaconchain \
   status: 0                                                # validator status: 0=active, 1=slashed, 2=exited
 ```
 
-#### Post-Quantum Keys (EIP-8450)
+#### Post-Quantum Genesis (`pq` fork)
 
-When `EIP8450_FORK_EPOCH` is `0`, the genesis state carries the EIP-8450 key registry (`post_quantum_key_material`, `post_quantum_key_change_epochs` and their builder counterparts).
-
-- Validators from mnemonics get a leanXMSS public key. Its 32-byte seed is `sha256("leanxmss-seed" || signing secret key)`, where the signing secret key is the validator's EIP-2333 key at `m/12381/3600/<index>/0/0`, so a client holding the usual validator keystore can derive it. The VRF root is left zero.
-- `--xmss-validator-pubkeys` replaces each validator's BLS public key with its leanXMSS public key, zero-padded to 48 bytes, and leaves the sync committee aggregate public keys zero. Use it for networks whose clients sign with leanXMSS instead of BLS.
-- Validators from `--additional-validators` can carry keys in two extra columns: `<pubkey>:<withdrawal credentials>:[<balance>]:<xmss pubkey>[:<vrf root>]`. Validators without them get an unset registry entry.
-- Deriving a key takes a few CPU seconds. `--xmss-pubkey-cache <dir>` stores derived keys in `<dir>/<mnemonic fingerprint>.bin`, where the key of index `i` is the 32 bytes at offset `32*i` and the fingerprint is the first 8 bytes of `sha256("leanxmss-seed" || BIP-39 seed)`, in hex. `--xmss-pubkey-url <base url>` fetches the needed range of the same file from a remote location before deriving what is still missing.
+- With `PQ_FORK_EPOCH: 0` the genesis state is the `pq` fork's `BeaconState`: validators and builders are identified by a 32-byte leanXMSS public key, validators carry a VRF root, and there are no sync committees. `HEZE_FORK_EPOCH` must not be scheduled, since `pq` builds on Gloas.
+- Validators from mnemonics get their keys from the signing secret key `sk`, the EIP-2333 key at `m/12381/3600/<index>/0/0`, so a client holding the usual validator keystore can derive them. The leanXMSS seed is `sha256("leanxmss-seed" || sk)`. The VRF tree has depth 31; with `vrf_seed = sha256("vrf-seed" || sk)`, leaf `i` is `sha256(vrf_seed || uint64_le(i))` for `i < 2**20` and 32 zero bytes above, which keeps the tree cheap to build and covers the first 2**20 slots.
+- Validators from `--additional-validators` carry their keys in two extra columns: `<pubkey>:<withdrawal credentials>:[<balance>]:<xmss pubkey>:<vrf root>`.
+- Deriving a key and its VRF root takes a few CPU seconds. `--xmss-pubkey-cache <dir>` stores them in `<dir>/<mnemonic fingerprint>.bin`, where the record of index `i` is the 64 bytes at offset `64*i` (public key, then VRF root) and the fingerprint is the first 8 bytes of `sha256("leanxmss-vrf-keys" || BIP-39 seed)`, in hex. `--xmss-pubkey-url <base url>` fetches the needed range of the same file from a remote location before deriving what is still missing.
 
 ## Development
 

@@ -12,8 +12,6 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
 )
 
-var XMSSValidatorPubkeys bool
-
 func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Validator, randaoMix phase0.Hash32) (*altair.SyncCommittee, error) {
 	activeIndices := make([]phase0.ValidatorIndex, 0, len(validators))
 
@@ -34,14 +32,6 @@ func GetGenesisSyncCommittee(cfg *beaconconfig.Config, validators []*phase0.Vali
 	syncCommittee := &altair.SyncCommittee{
 		Pubkeys:         make([]phase0.BLSPubKey, len(committeeIndices)),
 		AggregatePubkey: phase0.BLSPubKey{},
-	}
-
-	if XMSSValidatorPubkeys {
-		for i, idx := range committeeIndices {
-			syncCommittee.Pubkeys[i] = validators[idx].PublicKey
-		}
-
-		return syncCommittee, nil
 	}
 
 	blsPubs := make([]*blsu.Pubkey, 0, len(committeeIndices))

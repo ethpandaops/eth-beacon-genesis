@@ -300,8 +300,8 @@ func TestGenerateValidatorsByMnemonic_PQKeys(t *testing.T) {
 			t.Fatalf("expected validator %d to have an xmss public key", i)
 		}
 
-		if validator.PQKeys.VRFRoot != [32]byte{} {
-			t.Fatalf("expected validator %d to have a zero vrf root", i)
+		if validator.PQKeys.VRFRoot == [32]byte{} {
+			t.Fatalf("expected validator %d to have a vrf root", i)
 		}
 	}
 
@@ -319,12 +319,12 @@ func TestGenerateValidatorsByMnemonic_PQKeys(t *testing.T) {
 		t.Fatalf("failed to read xmss pubkey cache: %v", err)
 	}
 
-	if len(cacheData) != 7*32 || !bytes.Equal(cacheData[5*32:6*32], validators[0].PQKeys.XMSSPublicKey[:]) || !bytes.Equal(cacheData[6*32:], validators[1].PQKeys.XMSSPublicKey[:]) {
+	if len(cacheData) != 7*64 || !bytes.Equal(cacheData[5*64:5*64+32], validators[0].PQKeys.XMSSPublicKey[:]) || !bytes.Equal(cacheData[5*64+32:6*64], validators[0].PQKeys.VRFRoot[:]) || !bytes.Equal(cacheData[6*64:6*64+32], validators[1].PQKeys.XMSSPublicKey[:]) {
 		t.Fatalf("unexpected xmss pubkey cache content")
 	}
 
 	served := bytes.Clone(cacheData)
-	served[6*32] ^= 0xff
+	served[6*64] ^= 0xff
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/keys/"+filepath.Base(cacheFiles[0]) {
@@ -350,18 +350,18 @@ func TestGenerateValidatorsByMnemonic_PQKeys(t *testing.T) {
 		t.Fatalf("failed to load validators from mnemonics: %v", err)
 	}
 
-	if fetched[0].PQKeys.XMSSPublicKey != validators[0].PQKeys.XMSSPublicKey || fetched[1].PQKeys.XMSSPublicKey[0] != served[6*32] {
+	if fetched[0].PQKeys.XMSSPublicKey != validators[0].PQKeys.XMSSPublicKey || fetched[1].PQKeys.XMSSPublicKey[0] != served[6*64] || fetched[1].PQKeys.VRFRoot != validators[1].PQKeys.VRFRoot {
 		t.Fatalf("expected xmss public keys to be fetched from the url")
 	}
 
-	served = served[:6*32]
+	served = served[:6*64]
 
 	partial, err := GenerateValidatorsByMnemonic(mnemonicsFile, &XMSSPubkeySource{URL: server.URL + "/keys"})
 	if err != nil {
 		t.Fatalf("failed to load validators from mnemonics: %v", err)
 	}
 
-	if partial[0].PQKeys.XMSSPublicKey != validators[0].PQKeys.XMSSPublicKey || partial[1].PQKeys.XMSSPublicKey != validators[1].PQKeys.XMSSPublicKey {
+	if *partial[0].PQKeys != *validators[0].PQKeys || *partial[1].PQKeys != *validators[1].PQKeys {
 		t.Fatalf("expected keys missing from the url to be derived")
 	}
 }

@@ -14,7 +14,6 @@ import (
 
 	"github.com/ethpandaops/eth-beacon-genesis/beaconchain"
 	"github.com/ethpandaops/eth-beacon-genesis/beaconconfig"
-	"github.com/ethpandaops/eth-beacon-genesis/beaconutils"
 	"github.com/ethpandaops/eth-beacon-genesis/buildinfo"
 	"github.com/ethpandaops/eth-beacon-genesis/eth1"
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
@@ -70,15 +69,11 @@ var (
 
 	xmssPubkeyCacheFlag = &cli.StringFlag{
 		Name:  "xmss-pubkey-cache",
-		Usage: "Path to a directory caching the leanXMSS public keys derived from mnemonics (one <mnemonic fingerprint>.bin file per mnemonic, 32 bytes per key index)",
-	}
-	xmssValidatorPubkeysFlag = &cli.BoolFlag{
-		Name:  "xmss-validator-pubkeys",
-		Usage: "Use each validator's leanXMSS public key, zero-padded to 48 bytes, as its validator public key in place of the BLS one",
+		Usage: "Path to a directory caching the leanXMSS public keys and VRF roots derived from mnemonics (one <mnemonic fingerprint>.bin file per mnemonic, 64 bytes per key index)",
 	}
 	xmssPubkeyURLFlag = &cli.StringFlag{
 		Name:  "xmss-pubkey-url",
-		Usage: "Base URL to fetch precomputed leanXMSS public keys from (same file layout as the cache directory, fetched with a range request)",
+		Usage: "Base URL to fetch precomputed leanXMSS public keys and VRF roots from (same file layout as the cache directory, fetched with a range request)",
 	}
 
 	quietFlag = &cli.BoolFlag{
@@ -99,7 +94,7 @@ var (
 					eth1ConfigFlag, configFlag, mnemonicsFileFlag, validatorsFileFlag,
 					shadowForkBlockFlag, shadowForkRPCFlag, stateOutputFlag, jsonOutputFlag,
 					shuffleValidatorsFlag, shuffleSeedFlag, validatorsMappingOutputFlag,
-					xmssPubkeyCacheFlag, xmssPubkeyURLFlag, xmssValidatorPubkeysFlag,
+					xmssPubkeyCacheFlag, xmssPubkeyURLFlag,
 					quietFlag,
 				},
 				Action:    runDevnet,
@@ -164,14 +159,14 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 
 	var xmssPubkeys *validators.XMSSPubkeySource
 
-	withPQKeys := beaconchain.GetGenesisForkVersion(clConfig) == beaconchain.DataVersionEIP8450
+	withPQKeys := beaconchain.GetGenesisForkVersion(clConfig) == beaconchain.DataVersionPQ
 	if withPQKeys {
 		xmssPubkeys = &validators.XMSSPubkeySource{
 			CacheDir: cmd.String(xmssPubkeyCacheFlag.Name),
 			URL:      cmd.String(xmssPubkeyURLFlag.Name),
 		}
 
-		logrus.Infof("genesis fork has a post-quantum key registry, adding leanXMSS keys to mnemonic validators")
+		logrus.Infof("genesis fork is pq, deriving leanXMSS keys and VRF roots for mnemonic validators")
 	}
 
 	var clValidators []*validators.Validator
@@ -246,20 +241,6 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 
 	if withPQKeys {
 		logrus.Infof("%d of %d validators have post-quantum keys", pqKeyCount, len(clValidators))
-	}
-
-	if cmd.Bool(xmssValidatorPubkeysFlag.Name) {
-		if pqKeyCount != len(clValidators) {
-			return fmt.Errorf("--xmss-validator-pubkeys needs a leanXMSS key for every validator, got %d of %d", pqKeyCount, len(clValidators))
-		}
-
-		for _, val := range clValidators {
-			val.UseXMSSPublicKey()
-		}
-
-		beaconutils.XMSSValidatorPubkeys = true
-
-		logrus.Infof("using leanXMSS public keys as validator public keys")
 	}
 
 	logrus.Infof("loaded %d validators. total balance: %d ETH", len(clValidators), totalBalance/1_000_000_000)
