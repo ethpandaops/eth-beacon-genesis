@@ -98,7 +98,7 @@ type PQAttesterSlashing struct {
 type PQAttestation struct {
 	AggregationBits bitfield.Bitlist        `json:"aggregation_bits" ssz-index:"0" ssz-type:"progressive-bitlist"`
 	Data            *phase0.AttestationData `json:"data"             ssz-index:"1"`
-	CommitteeBits   []byte                  `json:"committee_bits"   ssz-index:"3" dynssz-size:"(MAX_COMMITTEES_PER_SLOT_PQ+7)/8" ssz-size:"2"`
+	CommitteeBits   []byte                  `json:"committee_bits"   ssz-index:"3" dynssz-size:"MAX_COMMITTEES_PER_SLOT_PQ/8" ssz-size:"2"`
 }
 
 type PQSignedExecutionPayloadBid struct {
