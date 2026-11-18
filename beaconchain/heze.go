@@ -46,6 +46,22 @@ func (b *hezeBuilder) AddValidators(val []*validators.Validator) {
 }
 
 func (b *hezeBuilder) BuildState() (*spec.VersionedBeaconState, error) {
+	genesisState, err := b.buildState(spec.DataVersionHeze, func(body *heze.BeaconBlockBody) any { return body })
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.Infof("genesis version: heze")
+	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
+	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
+
+	return &spec.VersionedBeaconState{
+		Version: spec.DataVersionHeze,
+		Heze:    genesisState,
+	}, nil
+}
+
+func (b *hezeBuilder) buildState(version spec.DataVersion, blockBody func(*heze.BeaconBlockBody) any) (*heze.BeaconState, error) {
 	genesisBlock := b.shadowForkBlock
 	if genesisBlock == nil {
 		genesisBlock = b.elGenesis.ToBlock()
@@ -94,7 +110,7 @@ func (b *hezeBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		ParentExecutionRequests: emptyExecutionRequests,
 	}
 
-	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(genesisBlockBody)
+	genesisBlockBodyRoot, err := b.dynSsz.HashTreeRoot(blockBody(genesisBlockBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute genesis block body root: %w", err)
 	}
@@ -144,7 +160,7 @@ func (b *hezeBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 	genesisState := &heze.BeaconState{
 		GenesisTime:           minGenesisTime + genesisDelay,
 		GenesisValidatorsRoot: validatorsRoot,
-		Fork:                  GetStateForkConfig(spec.DataVersionHeze, b.clConfig),
+		Fork:                  GetStateForkConfig(version, b.clConfig),
 		LatestBlockHeader: &phase0.BeaconBlockHeader{
 			BodyRoot: genesisBlockBodyRoot,
 		},
@@ -177,16 +193,7 @@ func (b *hezeBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		PTCWindow:                    ptcWindow,
 	}
 
-	versionedState := &spec.VersionedBeaconState{
-		Version: spec.DataVersionHeze,
-		Heze:    genesisState,
-	}
-
-	logrus.Infof("genesis version: heze")
-	logrus.Infof("genesis time: %v", genesisState.GenesisTime)
-	logrus.Infof("genesis validators root: 0x%x", genesisState.GenesisValidatorsRoot)
-
-	return versionedState, nil
+	return genesisState, nil
 }
 
 func (b *hezeBuilder) Serialize(state *spec.VersionedBeaconState, contentType http.ContentType) ([]byte, error) {

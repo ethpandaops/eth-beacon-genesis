@@ -3,10 +3,13 @@ package validators
 import (
 	"bytes"
 	"encoding/hex"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	hbls "github.com/herumi/bls-eth-go-binary/bls"
 )
@@ -63,7 +66,7 @@ func TestGenerateValidatorsByMnemonic_Valid(t *testing.T) {
 		t.Fatalf("failed to set ETH mode: %v", err)
 	}
 
-	validators, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	validators, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err != nil {
 		t.Fatalf("failed to load validators from mnemonics: %v", err)
 	}
@@ -124,7 +127,7 @@ func TestGenerateValidatorsByMnemonic_Valid(t *testing.T) {
 func TestGenerateValidatorsByMnemonic_InvalidFile(t *testing.T) {
 	mnemonicsFile := createTestMnemonicsFile(t, ``)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile + "invalid")
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile+"invalid", nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -143,7 +146,7 @@ func TestGenerateValidatorsByMnemonic_InvalidYaml(t *testing.T) {
   wd_prefix: "0x00"
 `)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -162,7 +165,7 @@ func TestGenerateValidatorsByMnemonic_InvalidMnemonic(t *testing.T) {
   wd_prefix: "0x00"
 `)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -182,7 +185,7 @@ func TestGenerateValidatorsByMnemonic_InvalidWdAddress(t *testing.T) {
   wd_address: "invalid_address"
 `)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -202,7 +205,7 @@ func TestGenerateValidatorsByMnemonic_InvalidWdPrefix(t *testing.T) {
   wd_address: "0x1234567890abcdef1234567890abcdef12345678"
 `)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -222,7 +225,7 @@ func TestGenerateValidatorsByMnemonic_InvalidKeyIndex(t *testing.T) {
   wd_address: "0x1234567890abcdef1234567890abcdef12345678"
 `)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -242,7 +245,7 @@ func TestGenerateValidatorsByMnemonic_InvalidWdKeyIndex(t *testing.T) {
   wd_key_path: "invalid_key_path"
 `)
 
-	_, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	_, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -258,12 +261,107 @@ func TestGenerateValidatorsByMnemonic_MassKeys(t *testing.T) {
   wd_address: "0x1234567890abcdef1234567890abcdef12345678"
 `)
 
-	validators, err := GenerateValidatorsByMnemonic(mnemonicsFile)
+	validators, err := GenerateValidatorsByMnemonic(mnemonicsFile, nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %s", err)
 	}
 
 	if len(validators) != 200 {
 		t.Fatalf("expected 200 validators, got %d", len(validators))
+	}
+}
+
+func TestGenerateValidatorsByMnemonic_PQKeys(t *testing.T) {
+	mnemonicsFile := createTestMnemonicsFile(t, `
+- mnemonic: "rare observe fox place unfold bargain cannon direct title sorry rabbit juice body autumn quality decrease mixture transfer crisp unveil path depend brick scissors"
+  start: 5
+  count: 2
+`)
+
+	err := hbls.Init(hbls.BLS12_381)
+	if err != nil {
+		t.Fatalf("failed to initialize BLS12-381: %v", err)
+	}
+
+	err = hbls.SetETHmode(hbls.EthModeLatest)
+	if err != nil {
+		t.Fatalf("failed to set ETH mode: %v", err)
+	}
+
+	cacheDir := t.TempDir()
+
+	validators, err := GenerateValidatorsByMnemonic(mnemonicsFile, &XMSSPubkeySource{CacheDir: cacheDir})
+	if err != nil {
+		t.Fatalf("failed to load validators from mnemonics: %v", err)
+	}
+
+	for i, validator := range validators {
+		if validator.PQKeys == nil || validator.PQKeys.XMSSPublicKey == [32]byte{} {
+			t.Fatalf("expected validator %d to have an xmss public key", i)
+		}
+
+		if validator.PQKeys.VRFRoot != [32]byte{} {
+			t.Fatalf("expected validator %d to have a zero vrf root", i)
+		}
+	}
+
+	if value, _ := hex.DecodeString("db6d8f70267c049f6d6dbba0c5e26442d25ed8dff77e0aca4d0ddd93a07c4790"); !bytes.Equal(validators[0].PQKeys.XMSSPublicKey[:], value) {
+		t.Fatalf("unexpected xmss public key for validator 0: %x", validators[0].PQKeys.XMSSPublicKey)
+	}
+
+	cacheFiles, err := filepath.Glob(filepath.Join(cacheDir, "*.bin"))
+	if err != nil || len(cacheFiles) != 1 {
+		t.Fatalf("expected one cache file, got %v (%v)", cacheFiles, err)
+	}
+
+	cacheData, err := os.ReadFile(cacheFiles[0])
+	if err != nil {
+		t.Fatalf("failed to read xmss pubkey cache: %v", err)
+	}
+
+	if len(cacheData) != 7*32 || !bytes.Equal(cacheData[5*32:6*32], validators[0].PQKeys.XMSSPublicKey[:]) || !bytes.Equal(cacheData[6*32:], validators[1].PQKeys.XMSSPublicKey[:]) {
+		t.Fatalf("unexpected xmss pubkey cache content")
+	}
+
+	served := bytes.Clone(cacheData)
+	served[6*32] ^= 0xff
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/keys/"+filepath.Base(cacheFiles[0]) {
+			http.NotFound(w, r)
+			return
+		}
+
+		http.ServeContent(w, r, "", time.Time{}, bytes.NewReader(served))
+	}))
+	defer server.Close()
+
+	fromCache, err := GenerateValidatorsByMnemonic(mnemonicsFile, &XMSSPubkeySource{CacheDir: cacheDir, URL: server.URL + "/keys/"})
+	if err != nil {
+		t.Fatalf("failed to load validators from mnemonics: %v", err)
+	}
+
+	if fromCache[1].PQKeys.XMSSPublicKey != validators[1].PQKeys.XMSSPublicKey {
+		t.Fatalf("expected the cache to take precedence over the url")
+	}
+
+	fetched, err := GenerateValidatorsByMnemonic(mnemonicsFile, &XMSSPubkeySource{URL: server.URL + "/keys"})
+	if err != nil {
+		t.Fatalf("failed to load validators from mnemonics: %v", err)
+	}
+
+	if fetched[0].PQKeys.XMSSPublicKey != validators[0].PQKeys.XMSSPublicKey || fetched[1].PQKeys.XMSSPublicKey[0] != served[6*32] {
+		t.Fatalf("expected xmss public keys to be fetched from the url")
+	}
+
+	served = served[:6*32]
+
+	partial, err := GenerateValidatorsByMnemonic(mnemonicsFile, &XMSSPubkeySource{URL: server.URL + "/keys"})
+	if err != nil {
+		t.Fatalf("failed to load validators from mnemonics: %v", err)
+	}
+
+	if partial[0].PQKeys.XMSSPublicKey != validators[0].PQKeys.XMSSPublicKey || partial[1].PQKeys.XMSSPublicKey != validators[1].PQKeys.XMSSPublicKey {
+		t.Fatalf("expected keys missing from the url to be derived")
 	}
 }

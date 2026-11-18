@@ -270,3 +270,43 @@ func TestLoadValidatorsFromFile_InvalidBalance(t *testing.T) {
 		t.Fatalf("expected error to contain 'invalid syntax', got %s", err)
 	}
 }
+
+func TestLoadValidatorsFromFile_PQKeys(t *testing.T) {
+	validatorsFile := createTestValidatorsFile(t, `
+0x9824e447621e4b3bca7794b91c664cc0b43322a70b1881b2f804e3a990a3965a64bfe7f098cb4c0396cd0c89218de0b4:001547805ff0547da9e51a7463a6a0c603eeda01dd930f7016185f0642b9ecaf:32000000000:0x1111111111111111111111111111111111111111111111111111111111111111:0x2222222222222222222222222222222222222222222222222222222222222222
+0xace5689384f87725790499fb5261b586d7dfb7d86058f0a909856272ba02df9929dcdb4b1ea529b02b948b3a1dca4d57:0x008aa7b9c37bf27e7c49a3185a3e721c7a02c94da7a0b6ad5f88f1b0477d3b88::3333333333333333333333333333333333333333333333333333333333333333
+0xa33dfc09b4031e8c520469024c0ef419cc148f71d7b9501f58f2e54fc644462f208119791e57c5c9b33bf5e47f705060:00b84654c946dc68b353384426a29a3c5d736d9f751c192d5038206e93f79d73
+`)
+
+	validators, err := LoadValidatorsFromFile(validatorsFile)
+	if err != nil {
+		t.Fatalf("failed to load validators: %v", err)
+	}
+
+	if validators[0].PQKeys == nil || validators[0].PQKeys.XMSSPublicKey[0] != 0x11 || validators[0].PQKeys.VRFRoot[0] != 0x22 {
+		t.Fatalf("unexpected pq keys for validator 0: %+v", validators[0].PQKeys)
+	}
+
+	if validators[1].Balance != nil {
+		t.Fatalf("expected validator 1 to have no balance")
+	}
+
+	if validators[1].PQKeys == nil || validators[1].PQKeys.XMSSPublicKey[0] != 0x33 || validators[1].PQKeys.VRFRoot != [32]byte{} {
+		t.Fatalf("unexpected pq keys for validator 1: %+v", validators[1].PQKeys)
+	}
+
+	if validators[2].PQKeys != nil {
+		t.Fatalf("expected validator 2 to have no pq keys")
+	}
+}
+
+func TestLoadValidatorsFromFile_InvalidXMSSPubkeyLength(t *testing.T) {
+	validatorsFile := createTestValidatorsFile(t, `
+0x9824e447621e4b3bca7794b91c664cc0b43322a70b1881b2f804e3a990a3965a64bfe7f098cb4c0396cd0c89218de0b4:001547805ff0547da9e51a7463a6a0c603eeda01dd930f7016185f0642b9ecaf:32000000000:0x1111
+`)
+
+	_, err := LoadValidatorsFromFile(validatorsFile)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}

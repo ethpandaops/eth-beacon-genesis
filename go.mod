@@ -3,10 +3,12 @@ module github.com/ethpandaops/eth-beacon-genesis
 go 1.26.10
 
 require (
+	github.com/OffchainLabs/go-bitfield v0.0.0-20251031151322-f427d04d8506
 	github.com/ethereum/go-ethereum v1.17.6
 	github.com/ethpandaops/go-eth2-client v0.1.11-0.20261009113423-329cfee1d481
 	github.com/herumi/bls-eth-go-binary v1.37.0
 	github.com/holiman/uint256 v1.3.2
+	github.com/nalepae/go-leanxmss v0.0.0-20261116143821-bafbae50fe8b
 	github.com/pk910/dynamic-ssz v1.3.3-0.20260921152246-990798fa9718
 	github.com/protolambda/bls12-381-util v0.1.0
 	github.com/sirupsen/logrus v1.10.2
@@ -19,7 +21,6 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/OffchainLabs/go-bitfield v0.0.0-20251031151322-f427d04d8506 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.13.0 // indirect

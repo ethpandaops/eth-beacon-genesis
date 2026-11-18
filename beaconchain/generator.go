@@ -12,6 +12,8 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
+var DataVersionEIP8450 = spec.DataVersionHeze + 1
+
 type NewBeaconGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder
 
 type BeaconGenesisBuilder interface {
@@ -82,6 +84,12 @@ var ForkConfigs = []ForkConfig{
 		EpochField:   "HEZE_FORK_EPOCH",
 		VersionField: "HEZE_FORK_VERSION",
 		BuilderFn:    NewHezeBuilder,
+	},
+	{
+		Version:      DataVersionEIP8450,
+		EpochField:   "EIP8450_FORK_EPOCH",
+		VersionField: "EIP8450_FORK_VERSION",
+		BuilderFn:    NewEIP8450Builder,
 	},
 }
 

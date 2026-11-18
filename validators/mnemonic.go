@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/ethpandaops/go-eth2-client/spec/phase0"
+	leanxmss "github.com/nalepae/go-leanxmss"
 	"github.com/sirupsen/logrus"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/sync/errgroup"
@@ -18,7 +19,7 @@ import (
 	e2util "github.com/wealdtech/go-eth2-util"
 )
 
-func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, error) {
+func GenerateValidatorsByMnemonic(mnemonicsConfigPath string, xmssPubkeys *XMSSPubkeySource) ([]*Validator, error) {
 	mnemonics, err := loadMnemonics(mnemonicsConfigPath)
 	if err != nil {
 		return nil, err
@@ -125,11 +126,22 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 			})
 		}
 
-		offset += mnemonicSrc.Count
-
 		if err := g.Wait(); err != nil {
 			return nil, err
 		}
+
+		if xmssPubkeys != nil {
+			pubkeys, err := xmssPubkeys.pubkeys(seed, mnemonicSrc.Start, mnemonicSrc.Count)
+			if err != nil {
+				return nil, err
+			}
+
+			for i := range pubkeys {
+				validators[offset+uint64(i)].PQKeys = &PQKeyMaterial{XMSSPublicKey: pubkeys[i]}
+			}
+		}
+
+		offset += mnemonicSrc.Count
 	}
 
 	return validators, nil
@@ -137,6 +149,21 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 
 func validatorKeyName(i uint64) string {
 	return fmt.Sprintf("m/12381/3600/%d/0/0", i)
+}
+
+func xmssSeedKeyName(i uint64) string {
+	return fmt.Sprintf("m/12381/3600/%d/1/0", i)
+}
+
+func deriveXMSSPubkey(seed []byte, idx uint64) (pubkey [32]byte, err error) {
+	xmssSeedSK, err := e2util.PrivateKeyFromSeedAndPath(seed, xmssSeedKeyName(idx))
+	if err != nil {
+		return pubkey, err
+	}
+
+	copy(pubkey[:], leanxmss.NewKeyFromSeed([32]byte(xmssSeedSK.Marshal())).PublicKey().Bytes())
+
+	return pubkey, nil
 }
 
 func withdrawalKeyName(i uint64) string {

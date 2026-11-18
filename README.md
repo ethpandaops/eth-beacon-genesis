@@ -6,6 +6,7 @@ A tool for generating Ethereum consensus layer (beacon chain) genesis states for
 
 - Generate beacon chain genesis states from execution layer genesis and validator configurations
 - Support for all forks up to Heze
+- Support for the EIP-8450 post-quantum key registry on top of Heze, with leanXMSS keys for genesis validators and builders
 - Support for validator onboarding via mnemonics or direct key imports
 - Configurable genesis parameters
 - Output in both SSZ and JSON formats
@@ -43,6 +44,8 @@ eth-genesis-state-generator beaconchain \
 - `--state-output`: Output path for SSZ genesis state
 - `--json-output`: Output path for JSON genesis state
 - `--shuffle-validators`: Shuffle the validator set block-wise to add variance to the validator ordering
+- `--xmss-pubkey-cache`: Directory caching leanXMSS public keys derived from mnemonics
+- `--xmss-pubkey-url`: Base URL to fetch precomputed leanXMSS public keys from
 - `--shuffle-seed`: Seed for the block-wise validator shuffle (defaults to the genesis fork version; only used with `--shuffle-validators`)
 - `--validators-mapping-output`: Output path for the validator mapping (state index ranges to source key ranges) in YAML format
 - `--quiet`: Suppress output
@@ -95,6 +98,8 @@ eth-genesis-state-generator beaconchain \
     GLOAS_FORK_EPOCH: 0
     HEZE_FORK_VERSION: 0x08000000
     HEZE_FORK_EPOCH: 0
+    EIP8450_FORK_VERSION: 0xe8450000
+    EIP8450_FORK_EPOCH: 0
 ```
 
 #### Validator Mnemonics File
@@ -108,6 +113,14 @@ eth-genesis-state-generator beaconchain \
   wd_prefix: "0x02"                                        # withdrawal credentials prefix
   status: 0                                                # validator status: 0=active, 1=slashed, 2=exited
 ```
+
+#### Post-Quantum Keys (EIP-8450)
+
+When `EIP8450_FORK_EPOCH` is `0`, the genesis state carries the EIP-8450 key registry (`post_quantum_key_material`, `post_quantum_key_change_epochs` and their builder counterparts).
+
+- Validators from mnemonics get a leanXMSS public key. Its 32-byte seed is the EIP-2333 key at path `m/12381/3600/<index>/1/0`. The VRF root is left zero.
+- Validators from `--additional-validators` can carry keys in two extra columns: `<pubkey>:<withdrawal credentials>:[<balance>]:<xmss pubkey>[:<vrf root>]`. Validators without them get an unset registry entry.
+- Deriving a key takes a few CPU seconds. `--xmss-pubkey-cache <dir>` stores derived keys in `<dir>/<mnemonic fingerprint>.bin`, where the key of index `i` is the 32 bytes at offset `32*i` and the fingerprint is the first 8 bytes of the SHA-256 of the BIP-39 seed, in hex. `--xmss-pubkey-url <base url>` fetches the needed range of the same file from a remote location before deriving what is still missing.
 
 ## Development
 
