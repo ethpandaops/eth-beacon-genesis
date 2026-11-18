@@ -167,6 +167,7 @@ func (b *hezeBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		Builders:                    clBuilders,
 		LatestExecutionPayloadBid: &heze.ExecutionPayloadBid{
 			ParentBlockHash:       phase0.Hash32(genesisBlockHash),
+			GasLimit:              genesisBlock.GasLimit(),
 			ExecutionRequestsRoot: executionRequestsRoot,
 			InclusionListBits:     make([]byte, inclusionListBitsBytes),
 		},
