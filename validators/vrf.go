@@ -3,14 +3,15 @@ package validators
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"sync"
 
 	"golang.org/x/crypto/sha3"
 )
 
 const (
-	VRFTreeDepth      = 31
-	vrfSeedDomain     = "vrf-seed"
-	vrfPopulatedDepth = 20
+	VRFTreeDepth     = 31
+	vrfSeedDomain    = "vrf-seed"
+	vrfParallelDepth = 16
 )
 
 func VRFSeed(signingKey []byte) [32]byte {
@@ -18,10 +19,6 @@ func VRFSeed(signingKey []byte) [32]byte {
 }
 
 func VRFLeaf(seed [32]byte, index uint64) [32]byte {
-	if index >= 1<<vrfPopulatedDepth {
-		return [32]byte{}
-	}
-
 	var buf [40]byte
 
 	copy(buf[:32], seed[:])
@@ -49,76 +46,37 @@ func keccak256(data []byte) [32]byte {
 	return out
 }
 
-func vrfLayers(seed [32]byte) [][][32]byte {
-	layers := make([][][32]byte, vrfPopulatedDepth+1)
-	layers[0] = make([][32]byte, 1<<vrfPopulatedDepth)
-
-	for i := range layers[0] {
-		layers[0][i] = VRFLeaf(seed, uint64(i))
+func vrfNode(seed [32]byte, height int, index uint64) [32]byte {
+	if height == 0 {
+		return VRFLeaf(seed, index)
 	}
 
-	for level := 1; level <= vrfPopulatedDepth; level++ {
-		prev := layers[level-1]
-		layers[level] = make([][32]byte, len(prev)/2)
-
-		for i := range layers[level] {
-			layers[level][i] = hashPair(prev[2*i], prev[2*i+1])
-		}
+	if height <= vrfParallelDepth {
+		return hashPair(vrfNode(seed, height-1, 2*index), vrfNode(seed, height-1, 2*index+1))
 	}
 
-	return layers
+	var (
+		wg   sync.WaitGroup
+		left [32]byte
+	)
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		left = vrfNode(seed, height-1, 2*index)
+	}()
+
+	right := vrfNode(seed, height-1, 2*index+1)
+
+	wg.Wait()
+
+	return hashPair(left, right)
 }
 
-func zeroHashes() [VRFTreeDepth][32]byte {
-	var zeros [VRFTreeDepth][32]byte
-
-	for level := 1; level < VRFTreeDepth; level++ {
-		zeros[level] = hashPair(zeros[level-1], zeros[level-1])
-	}
-
-	return zeros
-}
+var vrfRootDepth = VRFTreeDepth
 
 func VRFRoot(seed [32]byte) [32]byte {
-	layers := vrfLayers(seed)
-	zeros := zeroHashes()
-	node := layers[vrfPopulatedDepth][0]
-
-	for level := vrfPopulatedDepth; level < VRFTreeDepth; level++ {
-		node = hashPair(node, zeros[level])
-	}
-
-	return node
-}
-
-func VRFProof(seed [32]byte, index uint64) [VRFTreeDepth + 1][32]byte {
-	var proof [VRFTreeDepth + 1][32]byte
-
-	layers := vrfLayers(seed)
-	zeros := zeroHashes()
-	first := layers[vrfPopulatedDepth][0]
-	node := index
-
-	proof[0] = VRFLeaf(seed, index)
-
-	for level := 0; level < VRFTreeDepth; level++ {
-		sibling := node ^ 1
-
-		switch {
-		case level < vrfPopulatedDepth && sibling < uint64(len(layers[level])):
-			proof[level+1] = layers[level][sibling]
-		case level >= vrfPopulatedDepth && sibling == 0:
-			proof[level+1] = first
-		default:
-			proof[level+1] = zeros[level]
-		}
-
-		if level >= vrfPopulatedDepth {
-			first = hashPair(first, zeros[level])
-		}
-
-		node >>= 1
-	}
-
-	return proof
+	return vrfNode(seed, vrfRootDepth, 0)
 }

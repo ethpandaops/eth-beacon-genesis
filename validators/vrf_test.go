@@ -1,45 +1,48 @@
 package validators
 
 import (
+	"encoding/hex"
 	"testing"
 )
 
-func verifyVRFProof(proof *[VRFTreeDepth + 1][32]byte, index uint64, root [32]byte) bool {
-	node := proof[0]
-
-	for level := 0; level < VRFTreeDepth; level++ {
-		if index>>level&1 == 1 {
-			node = hashPair(proof[level+1], node)
-		} else {
-			node = hashPair(node, proof[level+1])
-		}
-	}
-
-	return node == root
+func init() {
+	vrfRootDepth = 12
 }
 
-func TestVRFProofs(t *testing.T) {
+func TestVRFNode(t *testing.T) {
 	seed := VRFSeed([]byte{1, 2, 3})
-	root := VRFRoot(seed)
 
-	for _, index := range []uint64{0, 1, 2, 12345, 1<<vrfPopulatedDepth - 1, 1 << vrfPopulatedDepth, 1<<vrfPopulatedDepth + 7, 1<<VRFTreeDepth - 1} {
-		proof := VRFProof(seed, index)
-		if !verifyVRFProof(&proof, index, root) {
-			t.Errorf("proof for leaf %d does not verify", index)
+	const depth = 18
+
+	layer := make([][32]byte, 1<<depth)
+	for i := range layer {
+		layer[i] = VRFLeaf(seed, uint64(i))
+	}
+
+	for len(layer) > 1 {
+		up := make([][32]byte, len(layer)/2)
+		for i := range up {
+			up[i] = hashPair(layer[2*i], layer[2*i+1])
 		}
 
-		if index < 1<<vrfPopulatedDepth && verifyVRFProof(&proof, index^1, root) {
-			t.Errorf("proof for leaf %d verifies at the wrong index", index)
-		}
+		layer = up
 	}
 
-	if VRFLeaf(seed, 5) == VRFLeaf(seed, 6) {
-		t.Error("leaves are not distinct")
+	if vrfNode(seed, depth, 0) != layer[0] {
+		t.Error("node differs from the tree built in full")
 	}
 
-	if VRFRoot(VRFSeed([]byte{1, 2, 4})) == root {
-		t.Error("roots are not distinct")
+	if vrfNode(seed, depth, 1) == layer[0] {
+		t.Error("nodes are not distinct")
 	}
 
-	t.Logf("root %x", root)
+	seedBytes, _ := hex.DecodeString("543fc5a4d86e79a434e9741770f7ee17c25bdc31be8d61436d7f9836538b03df")
+
+	var pinned [32]byte
+
+	copy(pinned[:], seedBytes)
+
+	if got := vrfNode(pinned, 18, 1); hex.EncodeToString(got[:]) != "a8e932e0dd6ec363635fdb0b30ea60d24cc1a861904c879e236c0e77f9efa562" {
+		t.Errorf("node %x differs from the pinned vector", got)
+	}
 }
