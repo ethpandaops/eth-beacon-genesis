@@ -67,6 +67,15 @@ var (
 		Usage: "Path to write the validator mapping (state index ranges to source key ranges) in YAML format",
 	}
 
+	xmssPubkeyCacheFlag = &cli.StringFlag{
+		Name:  "xmss-pubkey-cache",
+		Usage: "Path to a directory caching the leanXMSS public keys and VRF roots derived from mnemonics (one <mnemonic fingerprint>.bin file per mnemonic, 64 bytes per key index)",
+	}
+	xmssPubkeyURLFlag = &cli.StringFlag{
+		Name:  "xmss-pubkey-url",
+		Usage: "Base URL to fetch precomputed leanXMSS public keys and VRF roots from (same file layout as the cache directory, fetched with a range request)",
+	}
+
 	quietFlag = &cli.BoolFlag{
 		Name:    "quiet",
 		Aliases: []string{"q"},
@@ -85,6 +94,7 @@ var (
 					eth1ConfigFlag, configFlag, mnemonicsFileFlag, validatorsFileFlag,
 					shadowForkBlockFlag, shadowForkRPCFlag, stateOutputFlag, jsonOutputFlag,
 					shuffleValidatorsFlag, shuffleSeedFlag, validatorsMappingOutputFlag,
+					xmssPubkeyCacheFlag, xmssPubkeyURLFlag,
 					quietFlag,
 				},
 				Action:    runDevnet,
@@ -147,10 +157,22 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 
 	logrus.Infof("loaded consensus config. genesis fork version: 0x%x", clConfig.GetBytesDefault("GENESIS_FORK_VERSION", []byte{}))
 
+	var xmssPubkeys *validators.XMSSPubkeySource
+
+	withPQKeys := beaconchain.GetGenesisForkVersion(clConfig) == beaconchain.DataVersionPQ
+	if withPQKeys {
+		xmssPubkeys = &validators.XMSSPubkeySource{
+			CacheDir: cmd.String(xmssPubkeyCacheFlag.Name),
+			URL:      cmd.String(xmssPubkeyURLFlag.Name),
+		}
+
+		logrus.Infof("genesis fork is pq, deriving leanXMSS keys and VRF roots for mnemonic validators")
+	}
+
 	var clValidators []*validators.Validator
 
 	if mnemonicsFile != "" {
-		vals, err2 := validators.GenerateValidatorsByMnemonic(mnemonicsFile)
+		vals, err2 := validators.GenerateValidatorsByMnemonic(mnemonicsFile, xmssPubkeys)
 		if err2 != nil {
 			return fmt.Errorf("failed to load validators from mnemonics file: %w", err2)
 		}
@@ -195,6 +217,30 @@ func runDevnet(ctx context.Context, cmd *cli.Command) error {
 		}
 
 		pubkeyMap[val.PublicKey] = true
+	}
+
+	xmssPubkeyMap := make(map[[32]byte]bool)
+	pqKeyCount := 0
+
+	for idx, val := range clValidators {
+		if val.PQKeys == nil {
+			continue
+		}
+
+		if val.PQKeys.XMSSPublicKey == [32]byte{} {
+			return fmt.Errorf("zero xmss public key in validator set at index %d", idx)
+		}
+
+		if xmssPubkeyMap[val.PQKeys.XMSSPublicKey] {
+			return fmt.Errorf("duplicate xmss public key in validator set: 0x%x at index %d", val.PQKeys.XMSSPublicKey, idx)
+		}
+
+		xmssPubkeyMap[val.PQKeys.XMSSPublicKey] = true
+		pqKeyCount++
+	}
+
+	if withPQKeys {
+		logrus.Infof("%d of %d validators have post-quantum keys", pqKeyCount, len(clValidators))
 	}
 
 	logrus.Infof("loaded %d validators. total balance: %d ETH", len(clValidators), totalBalance/1_000_000_000)
