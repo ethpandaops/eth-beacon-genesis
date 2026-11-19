@@ -3,6 +3,8 @@ package validators
 import (
 	"crypto/sha256"
 	"encoding/binary"
+
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -25,7 +27,7 @@ func VRFLeaf(seed [32]byte, index uint64) [32]byte {
 	copy(buf[:32], seed[:])
 	binary.LittleEndian.PutUint64(buf[32:], index)
 
-	return sha256.Sum256(buf[:])
+	return keccak256(buf[:])
 }
 
 func hashPair(left, right [32]byte) [32]byte {
@@ -34,7 +36,17 @@ func hashPair(left, right [32]byte) [32]byte {
 	copy(buf[:32], left[:])
 	copy(buf[32:], right[:])
 
-	return sha256.Sum256(buf[:])
+	return keccak256(buf[:])
+}
+
+func keccak256(data []byte) [32]byte {
+	var out [32]byte
+
+	h := sha3.NewLegacyKeccak256()
+	h.Write(data)
+	h.Sum(out[:0])
+
+	return out
 }
 
 func vrfLayers(seed [32]byte) [][][32]byte {

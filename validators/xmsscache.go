@@ -20,7 +20,7 @@ import (
 
 const (
 	xmssRecordSize    = 64
-	xmssKeyFileDomain = "leanxmss-vrf-keys"
+	xmssKeyFileDomain = "leanxmss-keccak-vrf-keys"
 )
 
 type XMSSPubkeySource struct {
