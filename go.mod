@@ -78,3 +78,5 @@ require (
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace github.com/ethpandaops/go-eth2-client => github.com/nflaig/go-eth2-client-ethpandaops v0.1.13-0.20261124110106-6714b623bee8
