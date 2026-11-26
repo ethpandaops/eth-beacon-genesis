@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/ethpandaops/go-eth2-client/spec/phase0"
+	leanxmss "github.com/nalepae/go-leanxmss"
 	"github.com/sirupsen/logrus"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/sync/errgroup"
@@ -18,7 +19,7 @@ import (
 	e2util "github.com/wealdtech/go-eth2-util"
 )
 
-func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, error) {
+func GenerateValidatorsByMnemonic(mnemonicsConfigPath string, xmssPubkeys *XMSSPubkeySource) ([]*Validator, error) {
 	mnemonics, err := loadMnemonics(mnemonicsConfigPath)
 	if err != nil {
 		return nil, err
@@ -125,11 +126,22 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 			})
 		}
 
-		offset += mnemonicSrc.Count
-
 		if err := g.Wait(); err != nil {
 			return nil, err
 		}
+
+		if xmssPubkeys != nil {
+			keys, err := xmssPubkeys.keys(seed, mnemonicSrc.Start, mnemonicSrc.Count)
+			if err != nil {
+				return nil, err
+			}
+
+			for i := range keys {
+				validators[offset+uint64(i)].PQKeys = &keys[i]
+			}
+		}
+
+		offset += mnemonicSrc.Count
 	}
 
 	return validators, nil
@@ -137,6 +149,38 @@ func GenerateValidatorsByMnemonic(mnemonicsConfigPath string) ([]*Validator, err
 
 func validatorKeyName(i uint64) string {
 	return fmt.Sprintf("m/12381/3600/%d/0/0", i)
+}
+
+const xmssSeedDomain = "leanxmss-seed"
+
+func signingKey(seed []byte, idx uint64) ([]byte, error) {
+	signingSK, err := e2util.PrivateKeyFromSeedAndPath(seed, validatorKeyName(idx))
+	if err != nil {
+		return nil, err
+	}
+
+	return signingSK.Marshal(), nil
+}
+
+func deriveXMSSPubkey(seed []byte, idx uint64) (pubkey [32]byte, err error) {
+	sk, err := signingKey(seed, idx)
+	if err != nil {
+		return pubkey, err
+	}
+
+	xmssSeed := sha256.Sum256(append([]byte(xmssSeedDomain), sk...))
+	copy(pubkey[:], leanxmss.NewKeyFromSeed(xmssSeed).PublicKey().Bytes())
+
+	return pubkey, nil
+}
+
+func deriveVRFRoot(seed []byte, idx uint64) (root [32]byte, err error) {
+	sk, err := signingKey(seed, idx)
+	if err != nil {
+		return root, err
+	}
+
+	return VRFRoot(VRFSeed(sk)), nil
 }
 
 func withdrawalKeyName(i uint64) string {

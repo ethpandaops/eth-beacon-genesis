@@ -12,11 +12,17 @@ const (
 	ValidatorStatusExited
 )
 
+type PQKeyMaterial struct {
+	XMSSPublicKey [32]byte
+	VRFRoot       [32]byte
+}
+
 type Validator struct {
 	PublicKey             phase0.BLSPubKey
 	WithdrawalCredentials []byte
 	Balance               *uint64
 	Status                ValidatorStatus
+	PQKeys                *PQKeyMaterial
 
 	// Source identifies where the key originated
 	Source         string

@@ -85,13 +85,44 @@ func LoadValidatorsFromFile(validatorsConfigPath string) ([]*Validator, error) {
 		copy(validatorEntry.WithdrawalCredentials, withdrawalCred)
 
 		// Validator balance
-		if len(lineParts) > 2 {
+		if len(lineParts) > 2 && lineParts[2] != "" {
 			balance, err := strconv.ParseUint(lineParts[2], 10, 64)
 			if err != nil {
 				return nil, err
 			}
 
 			validatorEntry.Balance = &balance
+		}
+
+		// Post-quantum keys
+		if len(lineParts) > 3 {
+			pqKeys := &PQKeyMaterial{}
+
+			xmssPubKey, err := hex.DecodeString(strings.ReplaceAll(lineParts[3], "0x", ""))
+			if err != nil {
+				return nil, err
+			}
+
+			if len(xmssPubKey) != 32 {
+				return nil, fmt.Errorf("invalid xmss pubkey (invalid length) on line %v", lineNum)
+			}
+
+			copy(pqKeys.XMSSPublicKey[:], xmssPubKey)
+
+			if len(lineParts) > 4 {
+				vrfRoot, err := hex.DecodeString(strings.ReplaceAll(lineParts[4], "0x", ""))
+				if err != nil {
+					return nil, err
+				}
+
+				if len(vrfRoot) != 32 {
+					return nil, fmt.Errorf("invalid vrf root (invalid length) on line %v", lineNum)
+				}
+
+				copy(pqKeys.VRFRoot[:], vrfRoot)
+			}
+
+			validatorEntry.PQKeys = pqKeys
 		}
 
 		validators = append(validators, validatorEntry)

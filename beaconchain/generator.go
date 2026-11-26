@@ -12,6 +12,8 @@ import (
 	"github.com/ethpandaops/eth-beacon-genesis/validators"
 )
 
+var DataVersionPQ = spec.DataVersionHeze + 1
+
 type NewBeaconGenesisBuilderFn func(elGenesis *core.Genesis, clConfig *beaconconfig.Config) BeaconGenesisBuilder
 
 type BeaconGenesisBuilder interface {
@@ -82,6 +84,12 @@ var ForkConfigs = []ForkConfig{
 		EpochField:   "HEZE_FORK_EPOCH",
 		VersionField: "HEZE_FORK_VERSION",
 		BuilderFn:    NewHezeBuilder,
+	},
+	{
+		Version:      DataVersionPQ,
+		EpochField:   "PQ_FORK_EPOCH",
+		VersionField: "PQ_FORK_VERSION",
+		BuilderFn:    NewPQBuilder,
 	},
 }
 
