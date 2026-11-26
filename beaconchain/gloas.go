@@ -86,6 +86,7 @@ func (b *gloasBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		SignedExecutionPayloadBid: &gloas.SignedExecutionPayloadBid{
 			Message: &gloas.ExecutionPayloadBid{
 				ParentBlockHash:       phase0.Hash32(genesisBlockHash),
+				GasLimit:              genesisBlock.GasLimit(),
 				ExecutionRequestsRoot: executionRequestsRoot,
 			},
 			Signature: phase0.BLSSignature(make([]byte, 96)),

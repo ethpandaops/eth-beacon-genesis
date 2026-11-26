@@ -86,6 +86,7 @@ func (b *hezeBuilder) BuildState() (*spec.VersionedBeaconState, error) {
 		SignedExecutionPayloadBid: &heze.SignedExecutionPayloadBid{
 			Message: &heze.ExecutionPayloadBid{
 				ParentBlockHash:       phase0.Hash32(genesisBlockHash),
+				GasLimit:              genesisBlock.GasLimit(),
 				ExecutionRequestsRoot: executionRequestsRoot,
 				InclusionListBits:     make([]byte, inclusionListBitsBytes),
 			},
