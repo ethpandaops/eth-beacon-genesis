@@ -11,6 +11,8 @@ import (
 const (
 	VRFTreeDepth     = 31
 	vrfSeedDomain    = "vrf-seed"
+	vrfSecretDomain  = "VRF_SECRET"
+	vrfLeafDomain    = "VRF_LEAF"
 	vrfParallelDepth = 16
 )
 
@@ -18,11 +20,22 @@ func VRFSeed(signingKey []byte) [32]byte {
 	return sha256.Sum256(append([]byte(vrfSeedDomain), signingKey...))
 }
 
-func VRFLeaf(seed [32]byte, index uint64) [32]byte {
-	var buf [40]byte
+func VRFSecret(seed [32]byte, index uint64) [32]byte {
+	var buf [len(vrfSecretDomain) + 40]byte
 
-	copy(buf[:32], seed[:])
-	binary.LittleEndian.PutUint64(buf[32:], index)
+	copy(buf[:], vrfSecretDomain)
+	copy(buf[len(vrfSecretDomain):], seed[:])
+	binary.LittleEndian.PutUint64(buf[len(vrfSecretDomain)+32:], index)
+
+	return keccak256(buf[:])
+}
+
+func VRFLeaf(secret [32]byte, index uint64) [32]byte {
+	var buf [len(vrfLeafDomain) + 40]byte
+
+	copy(buf[:], vrfLeafDomain)
+	copy(buf[len(vrfLeafDomain):], secret[:])
+	binary.LittleEndian.PutUint64(buf[len(vrfLeafDomain)+32:], index)
 
 	return keccak256(buf[:])
 }
@@ -48,7 +61,7 @@ func keccak256(data []byte) [32]byte {
 
 func vrfNode(seed [32]byte, height int, index uint64) [32]byte {
 	if height == 0 {
-		return VRFLeaf(seed, index)
+		return VRFLeaf(VRFSecret(seed, index), index)
 	}
 
 	if height <= vrfParallelDepth {

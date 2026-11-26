@@ -16,7 +16,7 @@ func TestVRFNode(t *testing.T) {
 
 	layer := make([][32]byte, 1<<depth)
 	for i := range layer {
-		layer[i] = VRFLeaf(seed, uint64(i))
+		layer[i] = VRFLeaf(VRFSecret(seed, uint64(i)), uint64(i))
 	}
 
 	for len(layer) > 1 {
@@ -42,7 +42,7 @@ func TestVRFNode(t *testing.T) {
 
 	copy(pinned[:], seedBytes)
 
-	if got := vrfNode(pinned, 18, 1); hex.EncodeToString(got[:]) != "a8e932e0dd6ec363635fdb0b30ea60d24cc1a861904c879e236c0e77f9efa562" {
+	if got := vrfNode(pinned, 18, 1); hex.EncodeToString(got[:]) != "7bfa822fd12d715cc63754b628b6c9f8009f02269aa8802a9706968ef67bd679" {
 		t.Errorf("node %x differs from the pinned vector", got)
 	}
 }
